@@ -55,7 +55,6 @@ export default {
 
       params.append("amount", "50000");
       params.append("currency", "jpy");
-
       params.append("customer", customerId);
       params.append("payment_method", paymentMethodId);
 
@@ -78,16 +77,8 @@ export default {
       params.append("confirm", "true");
 
       // Stripe上で検索しやすくする
-      params.append(
-        "metadata[service]",
-        "Camly"
-      );
-
-      params.append(
-        "metadata[type]",
-        "GR III deposit"
-      );
-
+      params.append("metadata[service]", "Camly");
+      params.append("metadata[type]", "GR III deposit");
       params.append(
         "metadata[checkout_session_id]",
         sessionId
@@ -190,6 +181,29 @@ export default {
       font-size: 15px;
     }
 
+    .return-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid #eee;
+    }
+
+    .return-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #555;
+    }
+
+    .return-button {
+      display: block;
+      background: #111;
+      color: #fff;
+      text-decoration: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
     .deposit {
       margin-top: 24px;
       color: #777;
@@ -233,6 +247,24 @@ export default {
         <br>
 
         ④ カメラケースを取り出す
+      </div>
+
+      <div class="return-section">
+        <strong>返却するとき</strong>
+
+        <p class="return-text">
+          カメラと付属品をBOXに戻し、<br>
+          充電ケーブルを接続してください。<br>
+          BOXを開けた状態で写真を撮影してください。
+        </p>
+
+        <a
+          class="return-button"
+          href="https://forms.gle/N9Za9arCCe2mK2XN9"
+          target="_blank"
+        >
+          返却手続きはこちら
+        </a>
       </div>
 
       <div class="deposit">
