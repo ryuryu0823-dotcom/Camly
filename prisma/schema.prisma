@@ -89,6 +89,12 @@ model Box {
   mode          BoxMode
   isActive      Boolean  @default(true)
   lastHeartbeatAt DateTime?
+  // Phase A(PILOT_PHYSICAL_LOCK)専用: 物理キーボックスの現在の暗証番号。
+  // ハードコードせず管理画面から更新できるようにする(§17, 監査で判明したハードコード問題への対応)。
+  // Phase A中は1拠点1箱運用のため個々のRental単位で一意化はできない(ハードは共有の物理錠のため)。
+  // 定期的なローテーションは運用側の責務としてLAUNCH_BLOCKERS.mdに記載する。
+  currentPhysicalUnlockCode String?
+  unlockCodeUpdatedAt       DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -344,6 +350,8 @@ model Rental {
   unlockRequestedAt  DateTime?
   doorOpenedAt       DateTime?
   rentalStartedAt    DateTime?
+  // Phase A: 物理キーボックス暗証番号を"一度だけ表示"するための記録(§6 step8)。
+  unlockCodeRevealedAt DateTime?
   returnRequestedAt  DateTime?   // 動画/写真/チェック項目/扉ログが揃った時刻(料金計算の基準 §10)
   returnCompletedAt  DateTime?
   expiresAt          DateTime?   // 返却期限の目安(表示用)

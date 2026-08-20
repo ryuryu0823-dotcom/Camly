@@ -62,6 +62,31 @@ async function stripeRequest(
 }
 
 /**
+ * カード情報だけを保存する Checkout Session(mode=setup)を作成する。
+ * この時点では課金しない。setup完了後、success側で customer + payment_method を取得し、
+ * createAuthorizationHold() で単一の¥50,000オーソリを作成する(§8.1のアーキテクチャに合わせた二段構成)。
+ */
+export async function createSetupCheckoutSession(
+  config: StripeConfig,
+  params: { rentalId: string; successUrl: string; cancelUrl: string; customerEmail?: string }
+): Promise<any> {
+  const body = new URLSearchParams();
+  body.append("mode", "setup");
+  body.append("success_url", params.successUrl);
+  body.append("cancel_url", params.cancelUrl);
+  body.append("customer_creation", "always");
+  if (params.customerEmail) body.append("customer_email", params.customerEmail);
+  body.append("metadata[rental_id]", params.rentalId);
+  return stripeRequest(config, "POST", "/checkout/sessions", body, `camly-setup-${params.rentalId}`);
+}
+
+export async function retrieveCheckoutSession(config: StripeConfig, sessionId: string): Promise<any> {
+  const params = new URLSearchParams();
+  params.append("expand[]", "setup_intent.payment_method");
+  return stripeRequest(config, "GET", `/checkout/sessions/${sessionId}`, params);
+}
+
+/**
  * §8.1: 単一の¥50,000オーソリを作成する(capture_method=manual)。
  * customerId/paymentMethodId はCheckout Session完了後にsuccess側で取得したものを渡す想定。
  * metadataには内部Rental IDのみを入れ、PII(氏名/電話/動画URL/暗証番号)は入れない(§8.1)。
