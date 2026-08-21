@@ -10,7 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
-    "db:migrate": "psql \"$DATABASE_URL\" -f prisma/migrations/0001_init/migration.sql",
+    "db:migrate": "for f in prisma/migrations/*/migration.sql; do echo \"applying $f\"; psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done",
     "db:seed": "psql \"$DATABASE_URL\" -f prisma/seed.sql",
     "prisma:generate": "prisma generate"
   },
