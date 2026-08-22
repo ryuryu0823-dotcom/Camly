@@ -2,7 +2,8 @@
 
 /**
  * 利用中画面(§4 `/app/rentals/[token]`, §6 step10)。
- * 経過時間・現在の料金目安・暗証番号(初回のみ)・返却ボタンを表示する。
+ * 暗証番号(初回のみ)・使い方ステップ・経過時間・現在の料金目安・返却ボタンを表示する。
+ * 暗証番号と使い方は「一目で分かる」ことを優先し、画面上部にまとめて配置している。
  */
 import { useEffect, useState } from "react";
 
@@ -13,6 +14,12 @@ interface RentalStatusResponse {
   unlockCode: string | null;
   estimate: { totalJpy: number; durationMinutes: number; appliedTierLabel: string } | null;
 }
+
+const USAGE_STEPS: [string, string][] = [
+  ["01", "上の暗証番号をキーボックスに入力して解錠"],
+  ["02", "カメラ・付属品一式を取り出す"],
+  ["03", "使い終わったら下の「返却する」から返却手続きへ"],
+];
 
 export default function RentalActivePage({ params }: { params: { token: string } }) {
   const [data, setData] = useState<RentalStatusResponse | null>(null);
@@ -47,14 +54,23 @@ export default function RentalActivePage({ params }: { params: { token: string }
   return (
     <main className="min-h-screen px-6 py-16 max-w-lg mx-auto">
       <p className="text-camly-accent text-xs tracking-widest font-bold mb-2">利用中</p>
-      <h1 className="text-2xl font-bold mb-8">{data.device.model}</h1>
+      <h1 className="text-2xl font-bold mb-6">{data.device.model}</h1>
 
       {revealedCode && (
-        <div className="rounded-xl bg-camly-charcoal border border-camly-line p-6 mb-6 text-center">
+        <div className="rounded-xl bg-camly-charcoal border-2 border-camly-accent p-6 mb-4 text-center">
           <p className="text-xs text-camly-inkMuted mb-2">キーボックス暗証番号</p>
-          <p className="text-4xl font-bold tracking-[0.3em]">{revealedCode}</p>
+          <p className="text-5xl font-bold tracking-[0.3em] text-camly-accent">{revealedCode}</p>
         </div>
       )}
+
+      <div className="rounded-xl border border-camly-line divide-y divide-camly-line mb-8">
+        {USAGE_STEPS.map(([num, text]) => (
+          <div key={num} className="flex items-center gap-4 px-5 py-4">
+            <span className="text-camly-accentSoft font-bold text-lg shrink-0 w-6">{num}</span>
+            <p className="text-sm">{text}</p>
+          </div>
+        ))}
+      </div>
 
       {data.estimate && (
         <div className="rounded-xl border border-camly-line p-5 mb-8 space-y-2">
