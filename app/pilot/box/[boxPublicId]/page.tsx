@@ -2,11 +2,14 @@
 
 /**
  * Phase A貸出フロー入口(§4 `/pilot/box/[boxPublicId]`, §6)。
- * 本人情報・同意取得 → POST /api/pilot/rentals → Stripe Checkoutへリダイレクト。
+ * QRを読み取った直後にブランド説明画面(intro)を挟み、「はじめる」タップで
+ * 本人情報・同意取得フォーム(form)に切り替わる。フォーム自体はPOST /api/pilot/rentals
+ * → Stripe Checkoutへのリダイレクトという既存の流れそのまま。
  */
 import { useEffect, useState } from "react";
 
 export default function PilotBoxPage({ params }: { params: { boxPublicId: string } }) {
+  const [view, setView] = useState<"intro" | "form">("intro");
   const [form, setForm] = useState({ name: "", email: "", phone: "", stayReservationName: "" });
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,8 +63,12 @@ export default function PilotBoxPage({ params }: { params: { boxPublicId: string
     }
   }
 
+  if (view === "intro") {
+    return <IntroScreen onStart={() => setView("form")} />;
+  }
+
   return (
-    <main className="min-h-screen px-6 py-16 max-w-lg mx-auto">
+    <main className="min-h-screen px-6 py-16 max-w-lg mx-auto animate-fadeIn">
       <h1 className="text-2xl font-bold mb-2">カメラをレンタルする</h1>
       <p className="text-camly-inkMuted text-sm mb-8">SONY Cyber-shot DSC-RX100M3 / nasu room MINI</p>
 
@@ -107,6 +114,61 @@ export default function PilotBoxPage({ params }: { params: { boxPublicId: string
           {loading ? "処理中…" : "同意して決済へ進む"}
         </button>
       </form>
+    </main>
+  );
+}
+
+const INTRO_STEPS: [string, string][] = [
+  ["01", "お名前とカード情報を登録"],
+  ["02", "その場でボックスが解錠"],
+  ["03", "カメラを持って、撮影へ"],
+];
+
+function IntroScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden animate-fadeIn">
+      {/* 装飾: 絞り(アパーチャ)を思わせる同心円。カメラという被写体そのものから着想。 */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="w-[520px] h-[520px] rounded-full border border-camly-line/60" />
+        <div className="absolute w-[380px] h-[380px] rounded-full border border-camly-line/50" />
+        <div className="absolute w-[240px] h-[240px] rounded-full border border-camly-accent/25" />
+        <div className="absolute w-[240px] h-[240px] rounded-full bg-camly-accent/10 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
+        <p className="text-camly-accentSoft text-[11px] tracking-[0.3em] font-bold mb-5">NASU ROOM MINI</p>
+
+        <h1 className="text-6xl font-bold tracking-tight mb-4">Camly</h1>
+
+        <p className="text-camly-ink text-base leading-relaxed mb-1 text-balance">
+          あらゆる場所に、
+          <br />
+          新しい可能性を。
+        </p>
+        <p className="text-camly-inkMuted text-xs leading-relaxed mb-10">
+          この場所に置かれたカメラを、
+          <br />
+          スマホひとつでその場からレンタルできます。
+        </p>
+
+        <div className="w-full rounded-xl border border-camly-line bg-camly-charcoal/60 backdrop-blur-sm divide-y divide-camly-line mb-10">
+          {INTRO_STEPS.map(([num, text]) => (
+            <div key={num} className="flex items-center gap-4 px-5 py-3.5 text-left">
+              <span className="text-camly-accentSoft font-bold text-sm shrink-0 w-5">{num}</span>
+              <p className="text-xs text-camly-ink">{text}</p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={onStart}
+          className="w-full rounded-full bg-camly-accent text-camly-black font-bold py-4 text-sm active:scale-[0.98] transition-transform"
+        >
+          はじめる
+        </button>
+        <p className="text-camly-inkMuted text-[10px] mt-4">SONY Cyber-shot DSC-RX100M3 を今すぐレンタル</p>
+      </div>
     </main>
   );
 }
