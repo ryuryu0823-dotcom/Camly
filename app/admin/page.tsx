@@ -40,7 +40,11 @@ export default async function AdminDashboardPage() {
           <tbody>
             {rentals.map((r) => (
               <tr key={r.id} className="border-b border-camly-line last:border-0">
-                <td className="px-4 py-3">{r.checkoutCompartment.box.location.name}</td>
+                <td className="px-4 py-3">
+                  <a href={`/admin/rentals/${r.id}`} className="underline">
+                    {r.checkoutCompartment.box.location.name}
+                  </a>
+                </td>
                 <td className="px-4 py-3">{r.device.model}</td>
                 <td className="px-4 py-3">{r.customer?.name ?? "-"}</td>
                 <td className="px-4 py-3">

@@ -2,9 +2,11 @@
  * POST /api/admin/rentals/:id/approve-return
  *
  * 管理者による返却確認・承認(§10, §15)。
- * - AI_REVIEW_REQUIRED状態のRentalを、管理者が現物確認したうえで承認する。
- * - 承認時に、finalAmountJpy(+ Care)だけをpartial captureする(§8.1)。残枠は自動解放される。
- * - 破損が疑われる場合は承認せず、別途DamageCase起票フロー(未実装。Step5以降)へ回す。
+ * - AI_REVIEW_REQUIRED状態のRentalを、管理者が動画を確認したうえで判断する。
+ * - action="capture"(既定): finalAmountJpy(+ Care)だけをpartial captureする(§8.1)。残枠は自動解放される。
+ * - action="waive": 何も請求せず、¥50,000与信枠を丸ごと解放する(PaymentIntentをcancel)。
+ *   利用料を請求するかどうかは管理者がこの2択で都度判断する(破損時の増額請求は別途DamageCase
+ *   起票フロー(未実装。Step5以降)の対象)。
  *
  * 認証: このMVPでは呼び出し元でAdminUser認証済みである前提(実際のRBACミドルウェアはStep2の
  * 残タスクとして別途実装が必要。ここではadminUserIdをボディで受け取る簡易実装に留める)。
@@ -12,12 +14,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { assertValidTransition } from "@/lib/state-machine/rental";
-import { capturePartialAmount } from "@/lib/stripe/client";
-import { writeRentalEvent, writeAuditLog } from "@/lib/audit";
+import { capturePartialAmount, cancelAuthorization } from "@/lib/stripe/client";
+import { writeRentalEventBestEffort, writeAuditLogBestEffort } from "@/lib/audit";
 import { generateIdempotencyKey } from "@/lib/ids";
 
 interface ApproveBody {
   adminUserId: string;
+  action?: "capture" | "waive";
   reason?: string;
 }
 
@@ -26,6 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!body.adminUserId) {
     return NextResponse.json({ error: "adminUserId is required (audit trail)" }, { status: 400 });
   }
+  const action = body.action ?? "capture";
 
   const rental = await prisma.rental.findUnique({ where: { id: params.id } });
   if (!rental) return NextResponse.json({ error: "rental not found" }, { status: 404 });
@@ -41,27 +45,34 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "STRIPE_SECRET_KEY not configured" }, { status: 500 });
   }
 
-  let capture;
+  const capturedJpy = action === "waive" ? 0 : rental.finalAmountJpy;
   try {
-    capture = await capturePartialAmount(
-      { secretKey: stripeSecretKey },
-      {
-        paymentIntentId: rental.paymentIntentId,
-        amountToCaptureJpy: rental.finalAmountJpy,
-        idempotencyKey: generateIdempotencyKey("capture", rental.id),
-      }
-    );
+    if (action === "waive") {
+      await cancelAuthorization(
+        { secretKey: stripeSecretKey },
+        { paymentIntentId: rental.paymentIntentId, idempotencyKey: generateIdempotencyKey("cancel", rental.id) }
+      );
+    } else {
+      await capturePartialAmount(
+        { secretKey: stripeSecretKey },
+        {
+          paymentIntentId: rental.paymentIntentId,
+          amountToCaptureJpy: rental.finalAmountJpy,
+          idempotencyKey: generateIdempotencyKey("capture", rental.id),
+        }
+      );
+    }
   } catch (err) {
-    console.error("partial capture failed", err);
-    await writeAuditLog({
+    console.error(`${action} failed`, err);
+    await writeAuditLogBestEffort({
       actorType: "admin",
       actorId: body.adminUserId,
-      action: "payment.capture_failed",
+      action: action === "waive" ? "payment.cancel_failed" : "payment.capture_failed",
       targetType: "rental",
       targetId: rental.id,
       reasonText: body.reason,
     });
-    return NextResponse.json({ error: "capture failed" }, { status: 502 });
+    return NextResponse.json({ error: `${action} failed` }, { status: 502 });
   }
 
   await prisma.$transaction(async (tx) => {
@@ -78,8 +89,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       data: {
         rentalId: rental.id,
         stripePaymentIntentId: rental.paymentIntentId!,
-        eventType: "PARTIAL_CAPTURED",
-        amountJpy: rental.finalAmountJpy!,
+        eventType: action === "waive" ? "CANCELED" : "PARTIAL_CAPTURED",
+        amountJpy: capturedJpy,
       },
     });
     await tx.compartment.updateMany({
@@ -89,23 +100,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await tx.device.update({ where: { id: rental.deviceId }, data: { status: "AVAILABLE" } });
   });
 
-  await writeRentalEvent({
+  await writeRentalEventBestEffort({
     rentalId: rental.id,
     fromStatus: "AI_REVIEW_REQUIRED",
     toStatus: "COMPLETED",
     actor: `admin:${body.adminUserId}`,
-    reason: body.reason ?? "manual_return_approved",
-    metadata: { capturedJpy: rental.finalAmountJpy, stripePaymentIntentId: capture.id },
+    reason: body.reason ?? (action === "waive" ? "manual_return_waived" : "manual_return_approved"),
+    metadata: { action, capturedJpy },
   });
-  await writeAuditLog({
+  await writeAuditLogBestEffort({
     actorType: "admin",
     actorId: body.adminUserId,
-    action: "rental.manual_return_approve",
+    action: action === "waive" ? "rental.manual_return_waive" : "rental.manual_return_approve",
     targetType: "rental",
     targetId: rental.id,
     reasonText: body.reason,
-    metadata: { capturedJpy: rental.finalAmountJpy },
+    metadata: { action, capturedJpy },
   });
 
-  return NextResponse.json({ status: "COMPLETED", capturedJpy: rental.finalAmountJpy });
+  return NextResponse.json({ status: "COMPLETED", action, capturedJpy });
 }

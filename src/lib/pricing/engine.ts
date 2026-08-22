@@ -60,13 +60,14 @@ export function calculateUsagePrice(
   // 管理画面から設定されるデータが不正(順序違反)な場合は、黙って直さずエラーにする。
   // 静かにソートして受理すると、意図しないTier適用に気づけないため。
   for (let i = 1; i < version.tiers.length; i++) {
-    if (version.tiers[i].untilMinutes <= version.tiers[i - 1].untilMinutes) {
+    if (version.tiers[i]!.untilMinutes <= version.tiers[i - 1]!.untilMinutes) {
       throw new PricingError("tiers must be provided in strictly increasing untilMinutes order");
     }
   }
   const sorted = version.tiers;
 
-  const lastTier = sorted[sorted.length - 1];
+  // sorted.length >= 1 は上のtiers.length===0チェックで保証済み。
+  const lastTier = sorted[sorted.length - 1]!;
   const within24h = durationMinutes <= 1440;
 
   if (within24h) {

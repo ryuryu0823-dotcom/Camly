@@ -41,14 +41,13 @@ model AdminUser {
 model Customer {
   id                String   @id @default(cuid())
   name              String
-  email             String
+  email             String   @unique
   phone             String
   stripeCustomerId  String?  @unique
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   rentals           Rental[]
 
-  @@index([email])
   @@index([phone])
   @@map("customers")
 }
@@ -456,6 +455,7 @@ model MediaAsset {
   rentalId    String
   rental      Rental         @relation(fields: [rentalId], references: [id])
   kind        MediaAssetKind
+  stepKey     String?        // 返却ステップ撮影の場合、どのステップか(src/lib/return-steps.ts参照)
   storageKey  String         // S3互換オブジェクトストレージのキー(署名URLで配信)
   mimeType    String
   sizeBytes   Int?

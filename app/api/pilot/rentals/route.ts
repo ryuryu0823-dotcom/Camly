@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateRentalToken } from "@/lib/ids";
-import { writeRentalEvent, writeAuditLog } from "@/lib/audit";
+import { writeRentalEvent, writeAuditLog, writeRentalEventBestEffort, writeAuditLogBestEffort } from "@/lib/audit";
 import { assertValidTransition } from "@/lib/state-machine/rental";
 import { createSetupCheckoutSession } from "@/lib/stripe/client";
 
@@ -80,10 +80,10 @@ export async function POST(req: NextRequest) {
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `;
-      if (available.length === 0) {
+      const compartment = available[0];
+      if (!compartment) {
         throw new Error("NO_AVAILABLE_COMPARTMENT");
       }
-      const compartment = available[0];
       const deviceId = compartment.currentDeviceId!;
 
       await tx.compartment.update({
@@ -114,20 +114,26 @@ export async function POST(req: NextRequest) {
       });
 
       assertValidTransition("AVAILABLE", "HELD");
-      await writeRentalEvent({
-        rentalId: rental.id,
-        fromStatus: "AVAILABLE",
-        toStatus: "HELD",
-        actor: "customer",
-        reason: "rental_initiated",
-      });
-      await writeAuditLog({
-        actorType: "customer",
-        action: "rental.create",
-        targetType: "rental",
-        targetId: rental.id,
-        metadata: { boxPublicId: body.boxPublicId },
-      });
+      await writeRentalEvent(
+        {
+          rentalId: rental.id,
+          fromStatus: "AVAILABLE",
+          toStatus: "HELD",
+          actor: "customer",
+          reason: "rental_initiated",
+        },
+        tx
+      );
+      await writeAuditLog(
+        {
+          actorType: "customer",
+          action: "rental.create",
+          targetType: "rental",
+          targetId: rental.id,
+          metadata: { boxPublicId: body.boxPublicId },
+        },
+        tx
+      );
 
       return rental;
     });
@@ -171,6 +177,6 @@ async function releaseReservation(rentalId: string, reason: string) {
     await tx.compartment.update({ where: { id: rental.checkoutCompartmentId }, data: { status: "AVAILABLE" } });
     await tx.device.update({ where: { id: rental.deviceId }, data: { status: "AVAILABLE" } });
   });
-  await writeRentalEvent({ rentalId, fromStatus: "HELD", toStatus: "CANCELED", actor: "system", reason });
-  await writeAuditLog({ actorType: "system", action: "rental.auto_cancel", targetType: "rental", targetId: rentalId, reasonText: reason });
+  await writeRentalEventBestEffort({ rentalId, fromStatus: "HELD", toStatus: "CANCELED", actor: "system", reason });
+  await writeAuditLogBestEffort({ actorType: "system", action: "rental.auto_cancel", targetType: "rental", targetId: rentalId, reasonText: reason });
 }

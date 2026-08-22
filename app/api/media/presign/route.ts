@@ -12,6 +12,19 @@ interface PresignBody {
   rentalToken: string;
   kind: "RETURN_VIDEO" | "RETURN_PHOTO";
   contentType: string;
+  stepKey?: string; // 返却ステップ撮影(src/lib/return-steps.ts)の場合、どのステップの動画か
+}
+
+const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
+  "video/webm": "webm",
+  "video/mp4": "mp4",
+  "video/quicktime": "mov",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+};
+
+function extensionFor(contentType: string, kind: PresignBody["kind"]): string {
+  return EXTENSION_BY_MIME_TYPE[contentType] ?? (kind === "RETURN_VIDEO" ? "webm" : "jpg");
 }
 
 export async function POST(req: NextRequest) {
@@ -28,8 +41,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "media storage is not configured (see .env.example)" }, { status: 500 });
   }
 
-  const ext = body.kind === "RETURN_VIDEO" ? "mp4" : "jpg";
-  const objectKey = `rentals/${body.rentalToken}/${body.kind.toLowerCase()}-${randomBytes(6).toString("hex")}.${ext}`;
+  const ext = extensionFor(body.contentType, body.kind);
+  const namePart = body.stepKey ? `${body.kind.toLowerCase()}-${body.stepKey}` : body.kind.toLowerCase();
+  const objectKey = `rentals/${body.rentalToken}/${namePart}-${randomBytes(6).toString("hex")}.${ext}`;
 
   const uploadUrl = createPresignedPutUrl(
     { endpoint, bucket, region: process.env.MEDIA_STORAGE_REGION ?? "auto", accessKeyId, secretAccessKey },

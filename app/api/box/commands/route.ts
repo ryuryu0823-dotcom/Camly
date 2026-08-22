@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getActiveBoxProvider } from "@/lib/box/simulator-singleton";
-import { writeAuditLog } from "@/lib/audit";
+import { writeAuditLogBestEffort } from "@/lib/audit";
 
 interface CommandBody {
   boxId: string;
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (body.adminUserId) {
-    await writeAuditLog({
+    await writeAuditLogBestEffort({
       actorType: "admin",
       actorId: body.adminUserId,
       action: `box.command.${body.type.toLowerCase()}`,

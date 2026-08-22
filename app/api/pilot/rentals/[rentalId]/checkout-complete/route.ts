@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { retrieveCheckoutSession, createAuthorizationHold } from "@/lib/stripe/client";
 import { assertValidTransition } from "@/lib/state-machine/rental";
-import { writeRentalEvent, writeAuditLog } from "@/lib/audit";
+import { writeRentalEventBestEffort, writeAuditLogBestEffort } from "@/lib/audit";
 import { generateIdempotencyKey } from "@/lib/ids";
 
 const DEPOSIT_AMOUNT_JPY = 50000;
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { rentalId: st
 
   const rental = await prisma.rental.findUnique({
     where: { id: params.rentalId },
-    include: { box: false, checkoutCompartment: { include: { box: true } }, customer: true },
+    include: { checkoutCompartment: { include: { box: true } }, customer: true },
   });
   if (!rental) {
     return NextResponse.json({ error: "rental not found" }, { status: 404 });
@@ -68,14 +68,14 @@ export async function GET(req: NextRequest, { params }: { params: { rentalId: st
     console.error("authorization hold failed", err);
     assertValidTransition("HELD", "PAYMENT_FAILED");
     await prisma.rental.update({ where: { id: rental.id }, data: { status: "PAYMENT_FAILED" } });
-    await writeRentalEvent({ rentalId: rental.id, fromStatus: "HELD", toStatus: "PAYMENT_FAILED", actor: "system", reason: "authorization_hold_failed" });
+    await writeRentalEventBestEffort({ rentalId: rental.id, fromStatus: "HELD", toStatus: "PAYMENT_FAILED", actor: "system", reason: "authorization_hold_failed" });
     return NextResponse.json({ error: "payment authorization failed" }, { status: 402 });
   }
 
   if (hold.status !== "requires_capture") {
     assertValidTransition("HELD", "PAYMENT_FAILED");
     await prisma.rental.update({ where: { id: rental.id }, data: { status: "PAYMENT_FAILED" } });
-    await writeRentalEvent({ rentalId: rental.id, fromStatus: "HELD", toStatus: "PAYMENT_FAILED", actor: "system", reason: `unexpected_status:${hold.status}` });
+    await writeRentalEventBestEffort({ rentalId: rental.id, fromStatus: "HELD", toStatus: "PAYMENT_FAILED", actor: "system", reason: `unexpected_status:${hold.status}` });
     return NextResponse.json({ error: "payment not authorized", stripeStatus: hold.status }, { status: 402 });
   }
 
@@ -111,11 +111,11 @@ export async function GET(req: NextRequest, { params }: { params: { rentalId: st
     }
   });
 
-  await writeRentalEvent({ rentalId: rental.id, fromStatus: "HELD", toStatus: "PAYMENT_AUTHORIZED", actor: "system", reason: "stripe_authorization_succeeded", metadata: { paymentIntentId: hold.id } });
-  await writeAuditLog({ actorType: "system", action: "payment.authorize", targetType: "rental", targetId: rental.id, metadata: { paymentIntentId: hold.id, amountJpy: DEPOSIT_AMOUNT_JPY } });
+  await writeRentalEventBestEffort({ rentalId: rental.id, fromStatus: "HELD", toStatus: "PAYMENT_AUTHORIZED", actor: "system", reason: "stripe_authorization_succeeded", metadata: { paymentIntentId: hold.id } });
+  await writeAuditLogBestEffort({ actorType: "system", action: "payment.authorize", targetType: "rental", targetId: rental.id, metadata: { paymentIntentId: hold.id, amountJpy: DEPOSIT_AMOUNT_JPY } });
 
   if (box.mode === "PILOT_PHYSICAL_LOCK") {
-    await writeRentalEvent({ rentalId: rental.id, fromStatus: "PAYMENT_AUTHORIZED", toStatus: "RENTED", actor: "system", reason: "physical_lock_code_issued" });
+    await writeRentalEventBestEffort({ rentalId: rental.id, fromStatus: "PAYMENT_AUTHORIZED", toStatus: "RENTED", actor: "system", reason: "physical_lock_code_issued" });
   }
 
   return NextResponse.redirect(new URL(`/app/rentals/${rental.token}`, req.nextUrl.origin));

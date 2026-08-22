@@ -72,6 +72,7 @@ export async function createSetupCheckoutSession(
 ): Promise<any> {
   const body = new URLSearchParams();
   body.append("mode", "setup");
+  body.append("currency", "jpy");
   body.append("success_url", params.successUrl);
   body.append("cancel_url", params.cancelUrl);
   body.append("customer_creation", "always");

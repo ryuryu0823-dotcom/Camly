@@ -3,7 +3,9 @@ import en from "./dictionaries/en";
 
 export type Locale = "ja" | "en";
 
-export const dictionaries: Record<Locale, typeof ja> = { ja, en };
+// jaはas constで文言のリテラル型を持つが、enは構造(キー)は同じで値だけ異なる別言語の辞書なので、
+// enをtypeof jaとしてキャストする(キー構成の一致はtests/i18n.test.ts側で別途検証している)。
+export const dictionaries: Record<Locale, typeof ja> = { ja, en: en as unknown as typeof ja };
 
 export const DEFAULT_LOCALE: Locale = "ja";
 

@@ -11,11 +11,11 @@ INSERT INTO box_capabilities (id, "boxId", key, value) VALUES
   ('cap_1', 'box_nasu_1', 'remote_unlock', 'false'),
   ('cap_2', 'box_nasu_1', 'charger_sense', 'false');
 
-INSERT INTO compartments (id, "publicId", "boxId", index, status)
-VALUES ('comp_nasu_1_1', 'comp_pub_1a2b3c', 'box_nasu_1', 1, 'AVAILABLE');
-
 INSERT INTO devices (id, serial, model, tier, status, "purchasedAt", "purchasePriceJpy")
 VALUES ('dev_rx100m3_1', 'SN-RX100M3-0001', 'SONY Cyber-shot DSC-RX100M3', 'STANDARD', 'AVAILABLE', now(), 72000);
+
+INSERT INTO compartments (id, "publicId", "boxId", index, status, "currentDeviceId")
+VALUES ('comp_nasu_1_1', 'comp_pub_1a2b3c', 'box_nasu_1', 1, 'AVAILABLE', 'dev_rx100m3_1');
 
 INSERT INTO accessory_checklists (id, "deviceId", items)
 VALUES ('acc_1', 'dev_rx100m3_1', '["strap","sd_card","sd_card_reader","case","ac_charger","carry_cable"]');
@@ -42,3 +42,8 @@ INSERT INTO consent_versions (id, kind, version, "bodyUrl") VALUES
   ('cv_terms_1', 'terms', 'v1-draft', '/terms'),
   ('cv_care_1', 'care', 'v1-draft', '/care'),
   ('cv_privacy_1', 'privacy', 'v1-draft', '/privacy');
+
+-- ローカル動作確認用の管理者。実ログイン機構は未実装のためpasswordHashはダミー
+-- (本番投入前に必ず実際の認証・RBACミドルウェアに置き換えること)。
+INSERT INTO admin_users (id, email, name, role, "passwordHash", "isActive")
+VALUES ('admin_dev_local', 'dev-admin@example.com', '開発用テスト管理者', 'SUPER_ADMIN', 'dev-only-placeholder-not-a-real-hash', true);

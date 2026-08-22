@@ -25,7 +25,7 @@ test("ハッピーパスは全て許可される", () => {
     "COMPLETED",
   ];
   for (let i = 1; i < path.length; i++) {
-    assert.equal(isValidTransition(path[i - 1], path[i]), true, `${path[i - 1]} -> ${path[i]}`);
+    assert.equal(isValidTransition(path[i - 1]!, path[i]!), true, `${path[i - 1]} -> ${path[i]}`);
   }
 });
 

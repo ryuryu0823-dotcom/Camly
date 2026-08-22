@@ -39,6 +39,7 @@ export function verifyStripeWebhookSignature(
   const v1Signatures: string[] = [];
   for (const part of parts) {
     const [key, value] = part.split("=");
+    if (value === undefined) continue;
     if (key === "t") timestamp = value;
     if (key === "v1") v1Signatures.push(value);
   }

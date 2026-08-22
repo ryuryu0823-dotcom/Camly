@@ -35,9 +35,9 @@
 ```bash
 npm install
 cp .env.example .env.local  # 値を埋める
-npm run db:migrate          # prisma/migrations/*/migration.sql を順番に適用
-npm run db:seed             # 開発用シードデータ(prisma/seed.sql)
 npm run prisma:generate     # @prisma/client の型生成
+npm run db:migrate          # prisma/migrations/*/migration.sql を順番に適用(冪等)。
+                             # 初回はシードデータ(prisma/seed.sql)も自動投入される(scripts/migrate.cjs)
 npm run dev
 ```
 

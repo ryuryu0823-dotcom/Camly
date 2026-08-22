@@ -33,11 +33,9 @@ function toAmzDate(date: Date): { amzDate: string; dateStamp: string } {
   return { amzDate, dateStamp };
 }
 
-/**
- * 指定オブジェクトキーへの署名付きPUT URLを生成する。
- * expiresInSeconds はAWSの仕様上、最大7日(604800秒)。
- */
-export function createPresignedPutUrl(
+/** PUT/GET共通のSigV4署名付きURL生成。expiresInSeconds はAWSの仕様上、最大7日(604800秒)。 */
+function createPresignedUrl(
+  method: "PUT" | "GET",
   config: S3Config,
   objectKey: string,
   expiresInSeconds: number,
@@ -65,10 +63,10 @@ export function createPresignedPutUrl(
 
   const canonicalHeaders = `host:${host}\n`;
   const signedHeaders = "host";
-  const payloadHash = "UNSIGNED-PAYLOAD"; // ブラウザからの直接PUTのため、事前にボディハッシュ計算しない
+  const payloadHash = "UNSIGNED-PAYLOAD"; // ブラウザからの直接PUT/GETのため、事前にボディハッシュ計算しない
 
   const canonicalRequest = [
-    "PUT",
+    method,
     canonicalUri,
     canonicalQuerystring,
     canonicalHeaders,
@@ -85,4 +83,24 @@ export function createPresignedPutUrl(
   const signature = hmac(kSigning, stringToSign).toString("hex");
 
   return `${config.endpoint}${canonicalUri}?${canonicalQuerystring}&X-Amz-Signature=${signature}`;
+}
+
+/** 指定オブジェクトキーへの署名付きPUT URLを生成する(アップロード用)。 */
+export function createPresignedPutUrl(
+  config: S3Config,
+  objectKey: string,
+  expiresInSeconds: number,
+  now: Date = new Date()
+): string {
+  return createPresignedUrl("PUT", config, objectKey, expiresInSeconds, now);
+}
+
+/** 指定オブジェクトキーへの署名付きGET URLを生成する(管理画面での動画・写真再生用)。 */
+export function createPresignedGetUrl(
+  config: S3Config,
+  objectKey: string,
+  expiresInSeconds: number,
+  now: Date = new Date()
+): string {
+  return createPresignedUrl("GET", config, objectKey, expiresInSeconds, now);
 }

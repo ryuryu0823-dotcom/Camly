@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyStripeWebhookSignature, WebhookVerificationError } from "@/lib/stripe/webhook";
-import { writeAuditLog } from "@/lib/audit";
+import { writeAuditLogBestEffort } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
           await prisma.payment.create({
             data: { rentalId: rental.id, stripePaymentIntentId: paymentIntentId, eventType: "FAILED", amountJpy: 0, stripeEventId: event.id },
           });
-          await writeAuditLog({ actorType: "system", action: "webhook.payment_intent.payment_failed", targetType: "rental", targetId: rental.id, metadata: { eventId: event.id } });
+          await writeAuditLogBestEffort({ actorType: "system", action: "webhook.payment_intent.payment_failed", targetType: "rental", targetId: rental.id, metadata: { eventId: event.id } });
         }
       }
       break;
@@ -61,19 +61,19 @@ export async function POST(req: NextRequest) {
           await prisma.payment.create({
             data: { rentalId: rental.id, stripePaymentIntentId: paymentIntentId, eventType: "CANCELED", amountJpy: 0, stripeEventId: event.id },
           });
-          await writeAuditLog({ actorType: "system", action: "webhook.payment_intent.canceled", targetType: "rental", targetId: rental.id, metadata: { eventId: event.id } });
+          await writeAuditLogBestEffort({ actorType: "system", action: "webhook.payment_intent.canceled", targetType: "rental", targetId: rental.id, metadata: { eventId: event.id } });
         }
       }
       break;
     }
     case "charge.dispute.created": {
       // 異議申立(チャージバック)。DamageCase/管理画面フローへ接続する必要がある(Step5以降のTODO)。
-      await writeAuditLog({ actorType: "system", action: "webhook.charge.dispute.created", metadata: { eventId: event.id, raw: obj } });
+      await writeAuditLogBestEffort({ actorType: "system", action: "webhook.charge.dispute.created", metadata: { eventId: event.id, raw: obj } });
       break;
     }
     default: {
       // 未対応イベントは記録だけしてAckする。
-      await writeAuditLog({ actorType: "system", action: `webhook.unhandled.${event.type}`, metadata: { eventId: event.id } });
+      await writeAuditLogBestEffort({ actorType: "system", action: `webhook.unhandled.${event.type}`, metadata: { eventId: event.id } });
     }
   }
 

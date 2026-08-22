@@ -13,28 +13,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { assertValidTransition } from "@/lib/state-machine/rental";
 import { calculateTotalPrice, computeDurationMinutes, PricingTier } from "@/lib/pricing/engine";
-import { writeRentalEvent, writeAuditLog } from "@/lib/audit";
+import { writeRentalEventBestEffort, writeAuditLogBestEffort } from "@/lib/audit";
+import { RETURN_STEPS } from "@/lib/return-steps";
 
-interface ReturnBody {
-  videoAssetKey: string;
-  photoAssetKey: string;
-  checklist: Record<string, boolean>;
-  doorClosed: boolean;
-  chargerConnected: boolean;
-  surveyAnswers?: Record<string, unknown>;
+interface ReturnStepUpload {
+  stepKey: string;
+  storageKey: string;
+  mimeType: string;
 }
 
-const REQUIRED_CHECKLIST_ITEMS = [
-  "camera_body",
-  "battery",
-  "sd_card",
-  "sd_card_reader",
-  "strap",
-  "case",
-  "ac_charger",
-  "carry_cable",
-  "no_visible_damage_or_reported",
-];
+interface ReturnBody {
+  steps: ReturnStepUpload[];
+  surveyAnswers?: Record<string, unknown>;
+}
 
 export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
   const body = (await req.json()) as ReturnBody;
@@ -50,11 +41,22 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
   if (!rental.rentalStartedAt) {
     return NextResponse.json({ error: "rental has no start time" }, { status: 500 });
   }
-  if (!body.videoAssetKey || !body.photoAssetKey) {
-    return NextResponse.json({ error: "video and photo are required" }, { status: 400 });
+  if (!body.steps || body.steps.length === 0) {
+    return NextResponse.json({ error: "steps are required" }, { status: 400 });
   }
 
-  const missingItems = REQUIRED_CHECKLIST_ITEMS.filter((item) => body.checklist?.[item] !== true);
+  const uploadedStepKeys = new Set(body.steps.map((s) => s.stepKey));
+  const missingItems = RETURN_STEPS.filter((step) => !uploadedStepKeys.has(step.key)).map((step) => step.label);
+  if (missingItems.length > 0) {
+    return NextResponse.json({ error: `未撮影の項目があります: ${missingItems.join("、")}` }, { status: 400 });
+  }
+
+  // door_closed / charger_connected は今はステップ動画が届いたことを証跡として扱う。
+  // 将来Boxのセンサー(box_capabilities.charger_sense / remote_unlock)が使えるようになったら、
+  // そちらの検知結果に差し替える(§12.3)。
+  const doorClosed = uploadedStepKeys.has("door_closed");
+  const chargerConnected = uploadedStepKeys.has("charger_connected");
+  const checklist = Object.fromEntries(RETURN_STEPS.map((step) => [step.key, uploadedStepKeys.has(step.key)]));
 
   const returnRequestedAt = new Date();
   const minutes = computeDurationMinutes(rental.rentalStartedAt, returnRequestedAt);
@@ -83,22 +85,14 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
     });
 
     await tx.mediaAsset.createMany({
-      data: [
-        {
-          rentalId: rental.id,
-          kind: "RETURN_VIDEO",
-          storageKey: body.videoAssetKey,
-          mimeType: "video/mp4",
-          retainUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 原則90日保存(§11)
-        },
-        {
-          rentalId: rental.id,
-          kind: "RETURN_PHOTO",
-          storageKey: body.photoAssetKey,
-          mimeType: "image/jpeg",
-          retainUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-        },
-      ],
+      data: body.steps.map((step) => ({
+        rentalId: rental.id,
+        kind: "RETURN_VIDEO" as const,
+        stepKey: step.stepKey,
+        storageKey: step.storageKey,
+        mimeType: step.mimeType,
+        retainUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 原則90日保存(§11)
+      })),
     });
 
     await tx.returnInspection.create({
@@ -107,24 +101,23 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
         videoAssetId: null,
         photoAssetId: null,
         aiResult: "HUMAN_REVIEW",
-        aiNotes: missingItems.length > 0 ? `missing checklist items: ${missingItems.join(", ")}` : null,
-        checklist: body.checklist as any,
-        doorClosed: body.doorClosed,
-        chargerConnected: body.chargerConnected,
+        checklist: checklist as any,
+        doorClosed,
+        chargerConnected,
         surveyAnswers: (body.surveyAnswers as any) ?? null,
       },
     });
   });
 
-  await writeRentalEvent({
+  await writeRentalEventBestEffort({
     rentalId: rental.id,
     fromStatus: rental.status,
     toStatus: "AI_REVIEW_REQUIRED",
     actor: "customer",
     reason: "return_submitted",
-    metadata: { minutes, finalAmountJpy: price.totalJpy, missingItems },
+    metadata: { minutes, finalAmountJpy: price.totalJpy },
   });
-  await writeAuditLog({
+  await writeAuditLogBestEffort({
     actorType: "customer",
     action: "rental.return_submit",
     targetType: "rental",
