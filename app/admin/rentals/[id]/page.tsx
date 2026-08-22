@@ -10,6 +10,8 @@ import { prisma } from "@/lib/db";
 import { createPresignedGetUrl } from "@/lib/storage/s3-presign";
 import { RETURN_STEPS } from "@/lib/return-steps";
 import { ApproveButton } from "./ApproveButton";
+import { ForceReleaseButton } from "./ForceReleaseButton";
+import { UnlockCodeEditor } from "./UnlockCodeEditor";
 
 // レビュー・承認操作を行う運用画面のため、キャッシュせず毎回最新のDB状態を取得する。
 export const dynamic = "force-dynamic";
@@ -95,14 +97,28 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
         <p>最終確定額(利用料+Care): {rental.finalAmountJpy != null ? `¥${rental.finalAmountJpy.toLocaleString()}` : "-"}</p>
       </section>
 
-      {rental.status === "AI_REVIEW_REQUIRED" ? (
-        <ApproveButton rentalId={rental.id} finalAmountJpy={rental.finalAmountJpy} />
-      ) : (
-        <p className="text-xs text-camly-inkMuted">現在の状態(status={rental.status})では承認操作はできません。</p>
-      )}
+      <section className="mb-10">
+        {rental.status === "AI_REVIEW_REQUIRED" ? (
+          <ApproveButton rentalId={rental.id} finalAmountJpy={rental.finalAmountJpy} />
+        ) : RELEASABLE_STATUSES.includes(rental.status) ? (
+          <ForceReleaseButton rentalId={rental.id} status={rental.status} />
+        ) : (
+          <p className="text-xs text-camly-inkMuted">現在の状態(status={rental.status})ではここでの操作はできません。</p>
+        )}
+      </section>
+
+      <section className="text-sm">
+        <h2 className="text-lg font-bold mb-3">キーボックス暗証番号(Box設定)</h2>
+        <UnlockCodeEditor
+          boxId={rental.checkoutCompartment.box.id}
+          currentCode={rental.checkoutCompartment.box.currentPhysicalUnlockCode}
+        />
+      </section>
     </main>
   );
 }
+
+const RELEASABLE_STATUSES = ["HELD", "UNLOCK_REQUESTED", "DOOR_OPEN", "RENTED"];
 
 function getPresignedUrlForAsset(storageKey: string): string | null {
   const endpoint = process.env.MEDIA_STORAGE_ENDPOINT;
