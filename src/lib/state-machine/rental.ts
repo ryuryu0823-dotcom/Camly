@@ -59,6 +59,8 @@ const EXCEPTION_TRANSITIONS: [RentalStatus[], RentalStatus][] = [
   [["HELD"], "PAYMENT_FAILED"],
   [["PAYMENT_FAILED"], "CANCELED"],
   [["HELD", "PAYMENT_AUTHORIZED"], "CANCELED"],
+  // 管理者による強制取消(テスト取引の取消・与信枠の解放等、返却フローを経ない例外対応。§15)
+  [["UNLOCK_REQUESTED", "DOOR_OPEN", "RENTED"], "CANCELED"],
 
   // オーソリ期限
   [["PAYMENT_AUTHORIZED", "UNLOCK_REQUESTED", "DOOR_OPEN", "RENTED"], "AUTH_EXPIRES_SOON"],
