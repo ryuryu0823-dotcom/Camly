@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: Camly Box Integration API
+  version: 0.1.0
+  description: >
+    Backend⇄Box間の通信仕様(Master Handoff v2 §12.3, §12.4)。
+    Phase BのOEM/ODM選定時、実機側の実装がこの仕様(または合意された差分)に準拠することを想定した雛形。
+    認証方式は未確定(LAUNCH_BLOCKERS.md参照)。デバイス証明書 or APIキー等をOEM選定後に確定する。
+
+servers:
+  - url: https://camly-plum.vercel.app/api
+    description: 本番(候補)。実際のURLはデプロイ先に応じて変わる。
+
+paths:
+  /box/commands:
+    post:
+      summary: Backend→Box コマンド発行 (§12.3)
+      description: >
+        unlock/lock/status_request/reboot/ota_update をBoxへ送る。
+        commandは一回限り・短寿命・署名付き(nonce/signature/expiresAt)。
+        期限切れ・重複・replayはBox側(またはSimulator)で拒否される。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BoxCommandRequest"
+      responses:
+        "200":
+          description: コマンド発行結果(SENT/FAILED)。実際の解錠成否は後続のcommand_resultイベントで確定する。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoxCommandResult"
+        "400":
+          description: 不正なリクエスト
+
+  /box/events:
+    post:
+      summary: Box→Backend イベント送信 (§12.4)
+      description: >
+        heartbeat, door_opened/closed, lock_state_changed, charger_connected,
+        charging_started/stopped, tamper_detected, temperature_alert,
+        command_result, power_restored を送る。
+        通信断中はBox側でqueueし、復旧後に再送する。サーバーは event_id による重複、
+        sequence_number による順序逆転の両方に耐える(Box Simulatorで検証済み)。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BoxEvent"
+      responses:
+        "200":
+          description: 受信結果(重複だったかどうか、状態へ反映されたかどうか)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                  duplicate:
+                    type: boolean
+                  appliedToState:
+                    type: boolean
+
+components:
+  schemas:
+    BoxCommandRequest:
+      type: object
+      required: [boxId, type]
+      properties:
+        boxId:
+          type: string
+        compartmentId:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [UNLOCK, LOCK, STATUS_REQUEST, REBOOT, OTA_UPDATE]
+        ttlSeconds:
+          type: integer
+          default: 30
+          description: コマンドの有効期限(秒)。短寿命であること。
+        reason:
+          type: string
+          description: 管理者による手動操作の場合の理由(監査ログに記録される §15)。
+        adminUserId:
+          type: string
+          description: 管理者による手動操作の場合必須。
+
+    BoxCommandResult:
+      type: object
+      properties:
+        commandId:
+          type: string
+        nonce:
+          type: string
+        signature:
+          type: string
+          description: HMAC-SHA256署名(hex)。Box側は共有鍵で検証する。
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [SENT, FAILED]
+        error:
+          type: string
+          nullable: true
+
+    BoxEvent:
+      type: object
+      required: [boxId, eventType, eventId, deviceTimestamp, sequenceNumber]
+      properties:
+        boxId:
+          type: string
+        compartmentId:
+          type: string
+          nullable: true
+        eventType:
+          type: string
+          enum:
+            - HEARTBEAT
+            - DOOR_OPENED
+            - DOOR_CLOSED
+            - LOCK_STATE_CHANGED
+            - CHARGER_CONNECTED
+            - CHARGING_STARTED
+            - CHARGING_STOPPED
+            - TAMPER_DETECTED
+            - TEMPERATURE_ALERT
+            - COMMAND_RESULT
+            - POWER_RESTORED
+        eventId:
+          type: string
+          description: Box側発番の一意ID。重複排除に使う。
+        deviceTimestamp:
+          type: string
+          format: date-time
+        firmwareVersion:
+          type: string
+        sequenceNumber:
+          type: integer
+          description: Box単位の単調増加シーケンス番号。順序逆転検知に使う。
+        payload:
+          type: object
+          additionalProperties: true
+
+security: []
+# 認証スキームは未確定。OEM選定後、mTLS/デバイス証明書/APIキーいずれかを選定しここへ追記する。

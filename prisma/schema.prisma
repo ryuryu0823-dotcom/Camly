@@ -1,0 +1,589 @@
+// Camly データモデル
+// Master Handoff v2 §14 準拠
+// 時刻はUTC保存(DateTime = timestamptz)、表示側でJST変換する。
+// 金額は整数円(Int)。小数を扱わない。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// 認証・管理者
+// ---------------------------------------------------------------------------
+
+enum AdminRole {
+  SUPER_ADMIN
+  OPS
+  SUPPORT
+  READ_ONLY
+}
+
+model AdminUser {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  role         AdminRole
+  passwordHash String
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+
+  @@map("admin_users")
+}
+
+// 利用者(会員登録なし・貸出のたびに情報取得する前提。将来の再来訪識別用にemail/phoneでゆるく紐付け)
+model Customer {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  phone             String
+  stripeCustomerId  String?  @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  rentals           Rental[]
+
+  @@index([phone])
+  @@map("customers")
+}
+
+// ---------------------------------------------------------------------------
+// 拠点・筐体
+// ---------------------------------------------------------------------------
+
+model Location {
+  id           String   @id @default(cuid())
+  publicId     String   @unique // QR/URLに使う推測困難なID
+  name         String
+  nameEn       String?
+  slug         String   @unique
+  address      String?
+  isPublished  Boolean  @default(false) // /locations 一覧への公開フラグ
+  heroImageUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  boxes         Box[]
+  pricingRules  PricingRule[]
+
+  @@map("locations")
+}
+
+enum BoxMode {
+  PILOT_PHYSICAL_LOCK // Phase A: 市販ボックス + 物理鍵 + 暗証番号表示
+  SMART_BOX           // Phase B: OEMスマートボックス、遠隔解錠
+}
+
+model Box {
+  id            String   @id @default(cuid())
+  publicId      String   @unique
+  locationId    String
+  location      Location @relation(fields: [locationId], references: [id])
+  label         String   // 例: "nasu room MINI Box 1"
+  mode          BoxMode
+  isActive      Boolean  @default(true)
+  lastHeartbeatAt DateTime?
+  // Phase A(PILOT_PHYSICAL_LOCK)専用: 物理キーボックスの現在の暗証番号。
+  // ハードコードせず管理画面から更新できるようにする(§17, 監査で判明したハードコード問題への対応)。
+  // Phase A中は1拠点1箱運用のため個々のRental単位で一意化はできない(ハードは共有の物理錠のため)。
+  // 定期的なローテーションは運用側の責務としてLAUNCH_BLOCKERS.mdに記載する。
+  currentPhysicalUnlockCode String?
+  unlockCodeUpdatedAt       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  capabilities  BoxCapability[]
+  compartments  Compartment[]
+  commands      BoxCommand[]
+  events        BoxEvent[]
+
+  @@map("boxes")
+}
+
+// ハード側の能力をcapabilityとして取得する(adapter構造。§12.2)
+model BoxCapability {
+  id        String   @id @default(cuid())
+  boxId     String
+  box       Box      @relation(fields: [boxId], references: [id])
+  key       String   // 例: "remote_unlock", "charger_sense", "tamper_detect", "temperature_alert", "ota_update"
+  value     String   // JSON文字列 or 単純フラグ("true"/"false")
+  createdAt DateTime @default(now())
+
+  @@unique([boxId, key])
+  @@map("box_capabilities")
+}
+
+model Compartment {
+  id          String   @id @default(cuid())
+  publicId    String   @unique
+  boxId       String
+  box         Box      @relation(fields: [boxId], references: [id])
+  index       Int      // 口番号 (1..5 / 1..10)
+  status      CompartmentStatus @default(AVAILABLE)
+  currentDeviceId String? @unique
+  currentDevice   Device? @relation(fields: [currentDeviceId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rentals     Rental[] @relation("CheckoutCompartment")
+  returnRentals Rental[] @relation("ReturnCompartment")
+
+  @@unique([boxId, index])
+  @@map("compartments")
+}
+
+enum CompartmentStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  OUT_OF_SERVICE
+}
+
+// ---------------------------------------------------------------------------
+// カメラ個体・付属品
+// ---------------------------------------------------------------------------
+
+enum DeviceTier {
+  STANDARD
+  PREMIUM
+  PRO_SIGNATURE
+}
+
+enum DeviceStatus {
+  AVAILABLE
+  RENTED
+  RETURN_PENDING
+  MAINTENANCE
+  RETIRED
+}
+
+model Device {
+  id          String       @id @default(cuid())
+  serial      String       @unique
+  model       String       // 例: "SONY Cyber-shot DSC-RX100M3"
+  tier        DeviceTier
+  status      DeviceStatus @default(AVAILABLE)
+  purchasedAt DateTime?
+  purchasePriceJpy Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  compartment          Compartment?
+  assignmentHistory    DeviceAssignmentHistory[]
+  rentals              Rental[]
+  accessoryChecklist   AccessoryChecklist?
+
+  @@map("devices")
+}
+
+model DeviceAssignmentHistory {
+  id           String   @id @default(cuid())
+  deviceId     String
+  device       Device   @relation(fields: [deviceId], references: [id])
+  boxId        String?
+  compartmentId String?
+  assignedAt   DateTime @default(now())
+  unassignedAt DateTime?
+  reason       String?
+
+  @@map("device_assignment_history")
+}
+
+// 貸出時に確認する付属品一覧の定義(§10 返却チェック項目)
+model AccessoryChecklist {
+  id       String @id @default(cuid())
+  deviceId String @unique
+  device   Device @relation(fields: [deviceId], references: [id])
+  items    Json   // ["strap","sd_card","sd_card_reader","case","ac_charger","carry_cable"]
+
+  @@map("accessory_checklists")
+}
+
+// ---------------------------------------------------------------------------
+// 料金
+// ---------------------------------------------------------------------------
+
+model PricingRule {
+  id          String    @id @default(cuid())
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id])
+  tier        DeviceTier
+  name        String    // 例: "nasu room MINI pilot v1"
+  isStayRule  Boolean   @default(false) // nasu room MINI限定のstay料金。他拠点へ流用しない(§7)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  versions    PricingVersion[]
+
+  @@map("pricing_rules")
+}
+
+// 料金体系のスナップショット版。Rentalに適用versionを固定保存する。
+model PricingVersion {
+  id               String   @id @default(cuid())
+  pricingRuleId    String
+  pricingRule      PricingRule @relation(fields: [pricingRuleId], references: [id])
+  version          Int
+  effectiveFrom    DateTime @default(now())
+  effectiveTo      DateTime?
+  // 段階料金定義。JSON配列: [{ untilMinutes: 180, priceJpy: 990 }, { untilMinutes: 720, priceJpy: 1490 }, ...]
+  // 24時間超は additionalPer24hJpy を加算する。
+  tiers            Json
+  additionalPer24hJpy Int
+  currency         String   @default("JPY")
+  createdBy        String?  // AdminUser.id
+  createdAt        DateTime @default(now())
+
+  rentals          Rental[]
+
+  @@unique([pricingRuleId, version])
+  @@map("pricing_versions")
+}
+
+enum CarePlanTier {
+  NONE
+  STANDARD
+  PREMIUM
+  PRO
+}
+
+model CarePlan {
+  id           String       @id @default(cuid())
+  tier         CarePlanTier
+  priceJpy     Int
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+
+  rentals      Rental[]
+
+  @@map("care_plans")
+}
+
+// ---------------------------------------------------------------------------
+// 同意
+// ---------------------------------------------------------------------------
+
+model ConsentVersion {
+  id        String   @id @default(cuid())
+  kind      String   // "terms" | "care" | "privacy"
+  version   String
+  bodyUrl   String   // 表示した規約本文へのリンク/参照
+  createdAt DateTime @default(now())
+
+  rentals   Rental[]
+
+  @@unique([kind, version])
+  @@map("consent_versions")
+}
+
+// ---------------------------------------------------------------------------
+// 貸出・状態遷移
+// ---------------------------------------------------------------------------
+
+enum RentalStatus {
+  AVAILABLE
+  HELD
+  PAYMENT_AUTHORIZED
+  UNLOCK_REQUESTED
+  DOOR_OPEN
+  RENTED
+  RETURN_VIDEO_PENDING
+  AI_REVIEW
+  RETURN_DOOR_OPEN
+  CHARGE_REQUIRED
+  RETURNED_PENDING_REVIEW
+  COMPLETED
+  // 例外系
+  PAYMENT_FAILED
+  AUTH_EXPIRES_SOON
+  OVERDUE
+  AI_REVIEW_REQUIRED
+  DAMAGE_REVIEW
+  BOX_OFFLINE
+  DOOR_JAMMED
+  CHARGER_NOT_CONNECTED
+  REFUND_REQUIRED
+  CANCELED
+}
+
+model Rental {
+  id                String       @id @default(cuid())
+  token             String       @unique // /app/rentals/[token] に使う推測困難なID
+  status            RentalStatus @default(AVAILABLE)
+
+  customerId        String?
+  customer          Customer?    @relation(fields: [customerId], references: [id])
+  stayReservationName String?    // 宿泊予約名(nasu room MINI等)
+
+  deviceId          String
+  device            Device       @relation(fields: [deviceId], references: [id])
+
+  checkoutCompartmentId String
+  checkoutCompartment   Compartment @relation("CheckoutCompartment", fields: [checkoutCompartmentId], references: [id])
+
+  returnCompartmentId   String?
+  returnCompartment     Compartment? @relation("ReturnCompartment", fields: [returnCompartmentId], references: [id])
+
+  pricingVersionId  String
+  pricingVersion    PricingVersion @relation(fields: [pricingVersionId], references: [id])
+
+  carePlanId        String?
+  carePlan          CarePlan?    @relation(fields: [carePlanId], references: [id])
+
+  consentVersionIds String[]     // 複数(terms/care/privacy)のConsentVersion.idを保存
+  consentVersions   ConsentVersion[]
+
+  // 決済
+  paymentIntentId   String?      @unique // Stripe PaymentIntent ID (¥50,000オーソリ、単一)
+  authorizedAmountJpy Int?
+  captureBefore     DateTime?    // オーソリ期限監視用
+
+  // 時刻
+  heldAt            DateTime?
+  paymentAuthorizedAt DateTime?
+  unlockRequestedAt  DateTime?
+  doorOpenedAt       DateTime?
+  rentalStartedAt    DateTime?
+  // Phase A: 物理キーボックス暗証番号を"一度だけ表示"するための記録(§6 step8)。
+  unlockCodeRevealedAt DateTime?
+  returnRequestedAt  DateTime?   // 動画/写真/チェック項目/扉ログが揃った時刻(料金計算の基準 §10)
+  returnCompletedAt  DateTime?
+  expiresAt          DateTime?   // 返却期限の目安(表示用)
+
+  // 料金確定スナップショット
+  finalAmountJpy     Int?
+  finalAmountBreakdown Json?     // 内訳(計算式・適用Tier等)
+
+  createdAt          DateTime    @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  events             RentalEvent[]
+  payments           Payment[]
+  returnInspection   ReturnInspection?
+  damageCases        DamageCase[]
+  mediaAssets        MediaAsset[]
+
+  @@index([status])
+  @@map("rentals")
+}
+
+model RentalEvent {
+  id        String   @id @default(cuid())
+  rentalId  String
+  rental    Rental   @relation(fields: [rentalId], references: [id])
+  fromStatus RentalStatus?
+  toStatus  RentalStatus
+  reason    String?
+  actor     String   // "system" | "customer" | AdminUser.id | "box:{boxId}"
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([rentalId])
+  @@map("rental_events")
+}
+
+// ---------------------------------------------------------------------------
+// 決済
+// ---------------------------------------------------------------------------
+
+enum PaymentEventType {
+  AUTHORIZED
+  PARTIAL_CAPTURED
+  FULL_CAPTURED
+  CANCELED
+  REFUNDED
+  ADDITIONAL_CHARGE
+  FAILED
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  rentalId          String
+  rental            Rental   @relation(fields: [rentalId], references: [id])
+  stripePaymentIntentId String
+  eventType         PaymentEventType
+  amountJpy         Int
+  stripeEventId     String?  @unique // webhook冪等性のため
+  createdAt         DateTime @default(now())
+
+  @@index([rentalId])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// 返却・証跡
+// ---------------------------------------------------------------------------
+
+enum AiReviewResult {
+  PASS
+  RETAKE
+  HUMAN_REVIEW
+}
+
+model ReturnInspection {
+  id             String   @id @default(cuid())
+  rentalId       String   @unique
+  rental         Rental   @relation(fields: [rentalId], references: [id])
+  videoAssetId   String?
+  photoAssetId   String?
+  aiResult       AiReviewResult?
+  aiNotes        String?
+  checklist      Json     // 返却チェック項目のON/OFF (§10)
+  doorClosed     Boolean  @default(false)
+  chargerConnected Boolean @default(false)
+  surveyAnswers  Json?
+  reviewedByAdminId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("return_inspections")
+}
+
+enum MediaAssetKind {
+  RETURN_VIDEO
+  RETURN_PHOTO
+  DAMAGE_EVIDENCE
+}
+
+model MediaAsset {
+  id          String         @id @default(cuid())
+  rentalId    String
+  rental      Rental         @relation(fields: [rentalId], references: [id])
+  kind        MediaAssetKind
+  stepKey     String?        // 返却ステップ撮影の場合、どのステップか(src/lib/return-steps.ts参照)
+  storageKey  String         // S3互換オブジェクトストレージのキー(署名URLで配信)
+  mimeType    String
+  sizeBytes   Int?
+  retainUntil DateTime       // 原則90日保存。事故・異議申立中はlegal hold
+  legalHold   Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+
+  @@index([rentalId])
+  @@map("media_assets")
+}
+
+enum DamageCaseStatus {
+  REPORTED
+  EVIDENCE_REVIEW
+  ESTIMATE_PENDING
+  CUSTOMER_NOTIFIED
+  DISPUTED
+  ADMIN_APPROVED
+  CHARGED
+  CLOSED_NO_CHARGE
+}
+
+model DamageCase {
+  id            String           @id @default(cuid())
+  rentalId      String
+  rental        Rental           @relation(fields: [rentalId], references: [id])
+  status        DamageCaseStatus @default(REPORTED)
+  reportedBy    String           // "customer" | "next_customer" | "staff" | AdminUser.id
+  description   String
+  estimateJpy   Int?
+  customerResponse String?
+  approvedByAdminId String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([rentalId])
+  @@map("damage_cases")
+}
+
+// ---------------------------------------------------------------------------
+// スマートボックス連携(Phase B)
+// ---------------------------------------------------------------------------
+
+enum BoxCommandType {
+  UNLOCK
+  LOCK
+  STATUS_REQUEST
+  REBOOT
+  OTA_UPDATE
+}
+
+enum BoxCommandStatus {
+  PENDING
+  SENT
+  ACKNOWLEDGED
+  SUCCEEDED
+  FAILED
+  EXPIRED
+}
+
+model BoxCommand {
+  id            String           @id @default(cuid())
+  boxId         String
+  box           Box              @relation(fields: [boxId], references: [id])
+  compartmentId String?
+  type          BoxCommandType
+  status        BoxCommandStatus @default(PENDING)
+  nonce         String           @unique
+  signature     String
+  expiresAt     DateTime
+  issuedByAdminId String?        // 手動解錠時の管理者(§15 監査ログ)
+  reason        String?
+  createdAt     DateTime         @default(now())
+  resultAt      DateTime?
+  resultPayload Json?
+
+  @@index([boxId])
+  @@map("box_commands")
+}
+
+enum BoxEventType {
+  HEARTBEAT
+  DOOR_OPENED
+  DOOR_CLOSED
+  LOCK_STATE_CHANGED
+  CHARGER_CONNECTED
+  CHARGING_STARTED
+  CHARGING_STOPPED
+  TAMPER_DETECTED
+  TEMPERATURE_ALERT
+  COMMAND_RESULT
+  POWER_RESTORED
+}
+
+model BoxEvent {
+  id               String       @id @default(cuid())
+  boxId            String
+  box              Box          @relation(fields: [boxId], references: [id])
+  compartmentId    String?
+  eventType        BoxEventType
+  eventId          String       @unique // Box側発番。重複排除用
+  deviceTimestamp  DateTime
+  firmwareVersion  String?
+  sequenceNumber   Int
+  payload          Json?
+  receivedAt       DateTime     @default(now())
+
+  @@index([boxId, sequenceNumber])
+  @@map("box_events")
+}
+
+// ---------------------------------------------------------------------------
+// 監査ログ
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorType   String   // "admin" | "system" | "customer" | "box"
+  actorId     String?
+  adminUser   AdminUser? @relation(fields: [actorId], references: [id])
+  action      String   // 例: "rental.manual_return_approve", "box.remote_unlock", "payment.capture"
+  targetType  String?
+  targetId    String?
+  reasonText  String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
