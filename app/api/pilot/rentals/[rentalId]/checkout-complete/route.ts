@@ -22,6 +22,9 @@ import { generateIdempotencyKey } from "@/lib/ids";
 const DEPOSIT_AMOUNT_JPY = 50000;
 const AUTH_VALID_HOURS = 24 * 7; // captureBefore監視用の目安。Stripeの実際のオーソリ有効期限は決済手段により異なる。
 
+// Stripe決済の与信作成・DB更新を伴うため、キャッシュ/静的化させない。
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest, { params }: { params: { rentalId: string } }) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {

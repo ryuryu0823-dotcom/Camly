@@ -9,6 +9,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { calculateTotalPrice, computeDurationMinutes, PricingTier } from "@/lib/pricing/engine";
 
+// 状態を都度ポーリングするAPIかつ暗証番号の"一度だけ表示"を扱うため、キャッシュさせない。
+export const dynamic = "force-dynamic";
+
 export async function GET(_req: NextRequest, { params }: { params: { token: string } }) {
   const rental = await prisma.rental.findUnique({
     where: { token: params.token },

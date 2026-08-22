@@ -12,6 +12,9 @@
  */
 import { prisma } from "@/lib/db";
 
+// 貸出状況を都度確認する運用画面のため、キャッシュせず毎回最新のDB状態を取得する。
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboardPage() {
   const rentals = await prisma.rental.findMany({
     orderBy: { createdAt: "desc" },

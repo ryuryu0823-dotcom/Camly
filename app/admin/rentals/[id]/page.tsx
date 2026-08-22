@@ -11,6 +11,9 @@ import { createPresignedGetUrl } from "@/lib/storage/s3-presign";
 import { RETURN_STEPS } from "@/lib/return-steps";
 import { ApproveButton } from "./ApproveButton";
 
+// レビュー・承認操作を行う運用画面のため、キャッシュせず毎回最新のDB状態を取得する。
+export const dynamic = "force-dynamic";
+
 export default async function AdminRentalDetailPage({ params }: { params: { id: string } }) {
   const rental = await prisma.rental.findUnique({
     where: { id: params.id },

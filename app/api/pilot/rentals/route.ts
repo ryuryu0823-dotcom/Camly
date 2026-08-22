@@ -138,7 +138,9 @@ export async function POST(req: NextRequest) {
       return rental;
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    // 環境変数の設定漏れでlocalhost等の誤ったURLに固定されないよう、リクエスト自体から
+    // ホスト(プレビューデプロイごとに変わるVercelのURL等)を都度解決する。
+    const appUrl = req.nextUrl.origin;
 
     // Stripe呼び出しはDBトランザクションの外(fetchをtx内で行うとコネクションを長時間ロックするため)。
     // 失敗した場合は、確保済みのcompartment/deviceを明示的に解放する補償処理を行う(解放漏れ防止)。
