@@ -43,18 +43,19 @@ export function UnlockCodeEditor({ boxId, currentCode }: { boxId: string; curren
       <p className="text-xs text-camly-inkMuted">
         現在設定中の番号: <strong className="text-camly-ink">{savedCode ?? currentCode ?? "未設定"}</strong>
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="4〜8桁の数字"
-          className="flex-1 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-sm"
+          inputMode="numeric"
+          className="flex-1 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-base"
         />
         <input
           value={adminUserId}
           onChange={(e) => setAdminUserId(e.target.value)}
           placeholder="管理者ID"
-          className="flex-1 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-sm"
+          className="flex-1 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-base"
         />
       </div>
       {error && <p className="text-red-400 text-sm">{error}</p>}

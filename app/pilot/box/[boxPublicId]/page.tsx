@@ -227,8 +227,12 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           はじめる
         </button>
         <p className="text-camly-inkMuted text-[10px] mt-4">SONY Cyber-shot DSC-RX100M3 を今すぐレンタル</p>
-        <a href="/" className="text-camly-inkMuted text-[10px] underline mt-6">
-          Camlyについて
+        <a
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-camly-line text-camly-ink text-xs font-bold px-5 py-2.5 mt-6"
+        >
+          Camlyについて詳しく見る
+          <span aria-hidden>→</span>
         </a>
       </div>
     </main>

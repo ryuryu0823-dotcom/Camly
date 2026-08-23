@@ -88,6 +88,13 @@ export default function RentalActivePage({ params }: { params: { token: string }
       >
         返却する
       </a>
+      <a
+        href="/"
+        className="flex items-center justify-center gap-1.5 rounded-full border border-camly-line text-camly-ink text-xs font-bold px-5 py-2.5 mt-4"
+      >
+        Camlyについて詳しく見る
+        <span aria-hidden>→</span>
+      </a>
     </main>
   );
 }

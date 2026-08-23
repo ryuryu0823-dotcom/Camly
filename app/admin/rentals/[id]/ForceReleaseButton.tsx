@@ -59,7 +59,7 @@ export function ForceReleaseButton({ rentalId, status }: { rentalId: string; sta
         <input
           value={adminUserId}
           onChange={(e) => setAdminUserId(e.target.value)}
-          className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-sm"
+          className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-base"
         />
       </label>
       <label className="block">
@@ -67,7 +67,7 @@ export function ForceReleaseButton({ rentalId, status }: { rentalId: string; sta
         <input
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-sm"
+          className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-base"
         />
       </label>
       {error && <p className="text-red-400 text-sm">{error}</p>}
