@@ -21,6 +21,7 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
     include: {
       customer: true,
       device: true,
+      carePlan: true,
       checkoutCompartment: { include: { box: { include: { location: true } } } },
       mediaAssets: { orderBy: { createdAt: "asc" } },
       returnInspection: true,
@@ -94,6 +95,12 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
         <h2 className="text-lg font-bold mb-3">金額</h2>
         <p>与信(オーソリ): {rental.authorizedAmountJpy != null ? `¥${rental.authorizedAmountJpy.toLocaleString()}` : "-"}</p>
         <p>最終確定額(利用料+Care): {rental.finalAmountJpy != null ? `¥${rental.finalAmountJpy.toLocaleString()}` : "-"}</p>
+        <p>
+          安心プラン:{" "}
+          {rental.carePlan?.liabilityCapJpy != null
+            ? `加入中(破損時上限¥${rental.carePlan.liabilityCapJpy.toLocaleString()})`
+            : "未加入"}
+        </p>
       </section>
 
       <section>
@@ -101,7 +108,7 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
           <ApproveButton
             rentalId={rental.id}
             finalAmountJpy={rental.finalAmountJpy}
-            authorizedAmountJpy={rental.authorizedAmountJpy}
+            fullCaptureJpy={rental.carePlan?.liabilityCapJpy ?? rental.authorizedAmountJpy}
           />
         ) : RELEASABLE_STATUSES.includes(rental.status) ? (
           <ForceReleaseButton rentalId={rental.id} status={rental.status} />

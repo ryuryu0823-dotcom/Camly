@@ -4,7 +4,7 @@
  * 返却承認ボタン(§10, §15)。
  * 既存の POST /api/admin/rentals/:id/approve-return を呼ぶ。管理者が動画を見て3択で判断する:
  * - 「利用料のみ請求」: finalAmountJpyだけpartial captureし、¥50,000与信枠の残りは自動解放(通常ケース)
- * - 「与信枠を全額請求」: ¥50,000与信枠を全額capture(破損・紛失等)
+ * - 「¥○○を請求(破損等)」: 安心プラン加入中はその上限額、未加入なら¥50,000与信枠を全額capture
  * - 「請求せず与信枠を解除」: 何も請求せず、¥50,000与信枠を丸ごと解放(PaymentIntentをcancel)
  *
  * ⚠ 管理者認証未実装(admin/page.tsxと同じTODO)。adminUserIdは簡易な入力欄で受け取る。
@@ -16,11 +16,11 @@ type ApproveAction = "capture_usage" | "capture_full" | "waive";
 export function ApproveButton({
   rentalId,
   finalAmountJpy,
-  authorizedAmountJpy,
+  fullCaptureJpy,
 }: {
   rentalId: string;
   finalAmountJpy: number | null;
-  authorizedAmountJpy: number | null;
+  fullCaptureJpy: number | null;
 }) {
   const [adminUserId, setAdminUserId] = useState("");
   const [reason, setReason] = useState("");
@@ -54,7 +54,7 @@ export function ApproveButton({
   if (done) {
     const messages: Record<ApproveAction, string> = {
       waive: "請求せず与信枠を全額解放しました。",
-      capture_full: `与信枠¥${done.capturedJpy.toLocaleString()}を全額請求しました。`,
+      capture_full: `¥${done.capturedJpy.toLocaleString()}を請求し、与信枠の残りを解放しました。`,
       capture_usage: `利用料¥${done.capturedJpy.toLocaleString()}を請求し、与信枠の残りを解放しました。`,
     };
     return <p className="text-camly-accent font-bold text-sm">{messages[done.action]}</p>;
@@ -100,7 +100,7 @@ export function ApproveButton({
         >
           {submittingAction === "capture_full"
             ? "処理中…"
-            : `与信枠${authorizedAmountJpy != null ? `¥${authorizedAmountJpy.toLocaleString()}` : ""}を全額請求`}
+            : `¥${fullCaptureJpy != null ? fullCaptureJpy.toLocaleString() : ""}を請求(破損等)`}
         </button>
         <button
           type="button"

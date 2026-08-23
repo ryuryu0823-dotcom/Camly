@@ -8,10 +8,18 @@
  */
 import { useEffect, useState } from "react";
 
+interface CarePlanInfo {
+  id: string;
+  priceJpy: number;
+  liabilityCapJpy: number | null;
+}
+
 export default function PilotBoxPage({ params }: { params: { boxPublicId: string } }) {
   const [view, setView] = useState<"intro" | "form">("intro");
   const [form, setForm] = useState({ name: "", email: "", phone: "", stayReservationName: "" });
   const [agreed, setAgreed] = useState(false);
+  const [carePlanOptIn, setCarePlanOptIn] = useState(false);
+  const [carePlan, setCarePlan] = useState<CarePlanInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consentVersionIds, setConsentVersionIds] = useState<string[] | null>(null);
@@ -23,6 +31,13 @@ export default function PilotBoxPage({ params }: { params: { boxPublicId: string
         if (data.consentVersionIds) setConsentVersionIds(data.consentVersionIds);
       })
       .catch(() => setError("規約情報の取得に失敗しました。時間をおいて再度お試しください。"));
+
+    fetch("/api/care-plans/current")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.plan) setCarePlan(data.plan);
+      })
+      .catch(() => {});
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -48,6 +63,7 @@ export default function PilotBoxPage({ params }: { params: { boxPublicId: string
           phone: form.phone,
           stayReservationName: form.stayReservationName || undefined,
           consentVersionIds,
+          carePlanId: carePlanOptIn && carePlan ? carePlan.id : undefined,
         }),
       });
       const data = await res.json();
@@ -85,6 +101,28 @@ export default function PilotBoxPage({ params }: { params: { boxPublicId: string
         <div className="rounded-xl border border-camly-line p-4 text-xs text-camly-inkMuted leading-relaxed">
           決済時に¥50,000のカード利用枠を一時的に確保します(保証枠)。正常返却後、利用料以外は請求しません。
         </div>
+
+        {carePlan && (
+          <label className="flex items-start gap-3 rounded-xl border border-camly-line p-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={carePlanOptIn}
+              onChange={(e) => setCarePlanOptIn(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span className="text-sm">
+              <span className="font-bold">安心プラン(+¥{carePlan.priceJpy.toLocaleString()})</span>
+              <span className="block text-xs text-camly-inkMuted mt-1 leading-relaxed">
+                通常使用中に偶発的な破損があった場合の請求上限を¥
+                {carePlan.liabilityCapJpy?.toLocaleString() ?? "-"}
+                に抑えます。紛失・盗難・故意/重過失等は対象外です。
+                <a href="/care" className="underline">
+                  詳しくはこちら
+                </a>
+              </span>
+            </span>
+          </label>
+        )}
 
         <label className="flex items-start gap-3 text-sm">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-1" />
@@ -176,6 +214,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
               </div>
             ))}
           </div>
+          <p className="text-[10px] text-camly-inkMuted mt-3 pt-3 border-t border-camly-line">
+            +¥200の安心プランで、破損時の請求上限を¥3,000に抑えられます(次の画面で選択)。
+          </p>
         </div>
 
         <button

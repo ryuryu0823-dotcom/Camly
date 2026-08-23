@@ -253,13 +253,16 @@ enum CarePlanTier {
 }
 
 model CarePlan {
-  id           String       @id @default(cuid())
-  tier         CarePlanTier
-  priceJpy     Int
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now())
+  id             String       @id @default(cuid())
+  tier           CarePlanTier
+  priceJpy       Int
+  // 破損時、利用者が負担する上限額(円)。nullなら上限なし(与信枠¥50,000の範囲内で実費請求、§9)。
+  // 安心プラン加入時は原則¥3,000に抑える。紛失・盗難・故意/重過失等はプラン加入有無に関わらず対象外(補償規定参照)。
+  liabilityCapJpy Int?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
 
-  rentals      Rental[]
+  rentals        Rental[]
 
   @@map("care_plans")
 }

@@ -5,8 +5,8 @@
  * AI_REVIEW_REQUIRED状態のRentalを、管理者が動画を確認したうえで3択で判断する:
  * - action="capture_usage"(既定): finalAmountJpy(利用料+Care)だけをpartial captureする(§8.1)。
  *   残りの与信枠は自動解放される。通常の正常返却で使う。
- * - action="capture_full": ¥50,000与信枠を全額captureする。破損・紛失等、保証枠を
- *   全額請求すべきケースで使う。
+ * - action="capture_full": 破損・紛失等、保証枠を大きく請求すべきケースで使う。
+ *   安心プラン(CarePlan.liabilityCapJpy)加入中はその上限額を、未加入なら¥50,000与信枠を全額captureする。
  * - action="waive": 何も請求せず、¥50,000与信枠を丸ごと解放する(PaymentIntentをcancel)。
  *
  * 部分的な増額請求(利用料+修理実費の一部だけ、等)は別途DamageCase起票フロー
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
   const action: ApproveAction = body.action ?? "capture_usage";
 
-  const rental = await prisma.rental.findUnique({ where: { id: params.id } });
+  const rental = await prisma.rental.findUnique({ where: { id: params.id }, include: { carePlan: true } });
   if (!rental) return NextResponse.json({ error: "rental not found" }, { status: 404 });
   if (rental.status !== "AI_REVIEW_REQUIRED") {
     return NextResponse.json({ error: `cannot approve from status ${rental.status}` }, { status: 409 });
@@ -55,7 +55,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const capturedJpy =
-    action === "waive" ? 0 : action === "capture_full" ? rental.authorizedAmountJpy : rental.finalAmountJpy;
+    action === "waive"
+      ? 0
+      : action === "capture_full"
+        ? (rental.carePlan?.liabilityCapJpy ?? rental.authorizedAmountJpy)
+        : rental.finalAmountJpy;
   try {
     if (action === "waive") {
       await cancelAuthorization(

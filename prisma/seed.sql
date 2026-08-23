@@ -35,9 +35,10 @@ VALUES (
   'JPY'
 );
 
-INSERT INTO care_plans (id, tier, "priceJpy", "isActive") VALUES
-  ('care_none', 'NONE', 0, true),
-  ('care_standard', 'STANDARD', 250, true);
+-- 安心プラン: +¥200で破損時の利用者負担上限を¥3,000に抑える(紛失・盗難・故意/重過失等は対象外。/care参照)。
+INSERT INTO care_plans (id, tier, "priceJpy", "liabilityCapJpy", "isActive") VALUES
+  ('care_none', 'NONE', 0, NULL, true),
+  ('care_standard', 'STANDARD', 200, 3000, true);
 
 INSERT INTO consent_versions (id, kind, version, "bodyUrl") VALUES
   ('cv_terms_1', 'terms', 'v1-draft', '/terms'),

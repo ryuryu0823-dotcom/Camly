@@ -239,6 +239,21 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
           ))}
         </div>
 
+        <div className="rounded-xl border border-camly-line p-4 mb-6 text-xs text-camly-inkMuted leading-relaxed">
+          <p className="font-bold text-camly-ink mb-1">送信前にご確認ください</p>
+          <p>
+            SDカードのデータはお済みですか?カードリーダー等で転送する際に「削除しますか?」と表示されたら、
+            次にお使いになる方のために削除にご協力ください。
+          </p>
+          <p className="mt-2">
+            返却時点でSDカードにデータが残っていた場合の取扱い(閲覧・削除・消失を含む)について、当社は責任を負いかねます。大切なデータは必ず事前にご自身でバックアップしてください(
+            <a href="/care" className="underline">
+              補償規定
+            </a>
+            参照)。
+          </p>
+        </div>
+
         {submitError && <p className="text-red-400 text-sm mb-4">{submitError}</p>}
 
         <button
