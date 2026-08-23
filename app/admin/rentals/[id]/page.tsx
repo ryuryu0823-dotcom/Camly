@@ -60,7 +60,7 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
         <h2 className="text-lg font-bold mb-4">返却撮影ステップ</h2>
         {!storageConfigured && (
           <p className="text-xs text-camly-inkMuted mb-3">
-            ⚠ メディアストレージ未設定のため動画は再生できません(.env.localのMEDIA_STORAGE_*を参照)。
+            ⚠ メディアストレージ未設定のため写真・動画は再生できません(.env.localのMEDIA_STORAGE_*を参照)。
           </p>
         )}
         <div className="space-y-4">
@@ -69,9 +69,16 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
             const url = asset && storageConfigured ? getPresignedUrlForAsset(asset.storageKey) : null;
             return (
               <div key={step.key} className="rounded-xl border border-camly-line p-4">
-                <p className="text-sm font-bold mb-2">{step.label}</p>
+                <p className="text-sm font-bold mb-2">
+                  {step.label} <span className="text-camly-inkMuted font-normal">({step.kind === "photo" ? "写真" : "動画"})</span>
+                </p>
                 {url ? (
-                  <video src={url} controls playsInline className="w-full rounded-lg bg-black max-h-80" />
+                  step.kind === "photo" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={url} alt={step.label} className="w-full rounded-lg bg-black max-h-80 object-contain" />
+                  ) : (
+                    <video src={url} controls playsInline className="w-full rounded-lg bg-black max-h-80" />
+                  )
                 ) : (
                   <p className="text-xs text-red-400">未撮影、または再生できません</p>
                 )}

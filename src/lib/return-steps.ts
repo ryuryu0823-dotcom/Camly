@@ -12,25 +12,36 @@ export interface ReturnStep {
   key: string;
   label: string;
   instruction: string;
+  /** "photo": 静止画1枚。"video": 短い動画(利用者が「次へ」を押すまで録画)。 */
+  kind: "photo" | "video";
 }
 
 export const RETURN_STEPS: ReturnStep[] = [
-  { key: "front", label: "本体正面", instruction: "カメラの正面を大きく映してください" },
-  { key: "back", label: "本体背面", instruction: "カメラの背面を大きく映してください" },
+  { key: "front", label: "本体正面", instruction: "カメラの正面が分かるように撮影してください", kind: "photo" },
+  { key: "back", label: "本体背面", instruction: "カメラの背面が分かるように撮影してください", kind: "photo" },
   {
     key: "accessories",
     label: "付属品一式",
-    instruction: "ストラップ・SDカード・SDカードリーダー・ケース・AC充電器・持ち運び用ケーブルを並べて映してください",
+    instruction: "ストラップ・SDカード・SDカードリーダー・ケース・AC充電器・持ち運び用ケーブルを並べて撮影してください",
+    kind: "photo",
+  },
+  {
+    key: "power_on_check",
+    label: "起動確認",
+    instruction: "カメラの電源を入れて、正常に起動し画面が点灯する様子を映してください",
+    kind: "video",
   },
   {
     key: "charger_connected",
     label: "充電ケーブル接続",
-    instruction: "扉を閉める前に、内部固定ケーブルを接続した状態を映してください",
+    instruction: "扉を閉める前に、内部固定ケーブルを接続した状態を撮影してください",
+    kind: "photo",
   },
   {
     key: "door_closed",
     label: "扉を閉めて鍵を戻した状態",
-    instruction: "扉を閉め、鍵を元の場所に戻した状態を映してください",
+    instruction: "扉を閉め、鍵を元の場所に戻した状態を撮影してください",
+    kind: "photo",
   },
 ];
 

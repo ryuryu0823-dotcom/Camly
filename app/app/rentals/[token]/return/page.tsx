@@ -2,8 +2,10 @@
 
 /**
  * 返却フロー(§4 `/app/rentals/[token]/return`, §10)。
- * RETURN_STEPS(src/lib/return-steps.ts)の順に、サイト内カメラで各項目を録画しながら案内する。
- * 各ステップ: カメラ起動→自動で録画開始→利用者が「次へ」を押した時点で録画停止・アップロード→次のステップへ。
+ * RETURN_STEPS(src/lib/return-steps.ts)の順に、サイト内カメラで各項目を撮影しながら案内する。
+ * ステップごとに kind: "photo" | "video" が決まっており、
+ * - photo: ライブプレビューから1枚キャプチャして即アップロード
+ * - video: 到着時に自動で録画開始し、利用者が「次へ」を押した時点で録画停止・アップロード
  * 録画時間を固定タイマーで区切らず、利用者の操作に委ねることで無駄に長い動画にならないようにしている。
  */
 import { useEffect, useRef, useState } from "react";
@@ -54,6 +56,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
   const [results, setResults] = useState<Record<string, StepResult>>({});
   const [survey, setSurvey] = useState<SurveyState>(EMPTY_SURVEY);
   const [recording, setRecording] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -72,7 +75,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
   useEffect(() => {
     if (isReview || !step) return;
     if (results[step.key]) return; // 撮影済み(戻ってきた場合)はカメラを起動し直さない
-    startCameraAndRecording();
+    startCamera(step.kind);
     return () => stopStream();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
@@ -83,9 +86,11 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
     streamRef.current = null;
   }
 
-  async function startCameraAndRecording() {
+  /** カメラを起動する。video用ステップの場合のみ、起動と同時に録画も開始する。 */
+  async function startCamera(kind: "photo" | "video") {
     setCameraError(null);
     setRecording(false);
+    setCameraReady(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -95,6 +100,9 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+      setCameraReady(true);
+
+      if (kind === "photo") return; // 静止画ステップは録画不要。プレビューだけで撮影ボタンを待つ。
 
       const mimeType = pickSupportedMimeType();
       if (!mimeType) {
@@ -113,15 +121,20 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
       setRecording(true);
     } catch (err) {
       console.error("camera start failed", err);
-      setCameraError("カメラを起動できませんでした。ブラウザのカメラ許可を確認するか、下のファイル選択から動画を選んでください。");
+      setCameraError("カメラを起動できませんでした。ブラウザのカメラ許可を確認するか、下のファイル選択から選んでください。");
     }
   }
 
-  async function uploadAndGetKey(blob: Blob, mimeType: string, stepKey: string): Promise<string> {
+  async function uploadAndGetKey(blob: Blob, mimeType: string, stepKey: string, kind: "photo" | "video"): Promise<string> {
     const presignRes = await fetch("/api/media/presign", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rentalToken: params.token, kind: "RETURN_VIDEO", contentType: mimeType, stepKey }),
+      body: JSON.stringify({
+        rentalToken: params.token,
+        kind: kind === "photo" ? "RETURN_PHOTO" : "RETURN_VIDEO",
+        contentType: mimeType,
+        stepKey,
+      }),
     });
     const presign = await presignRes.json();
     if (!presignRes.ok) throw new Error(presign.error ?? "presign failed");
@@ -131,15 +144,44 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
     return presign.storageKey;
   }
 
+  /** ライブプレビューの現在のフレームをJPEGとして1枚キャプチャする。 */
+  function capturePhotoBlob(): Promise<Blob | null> {
+    return new Promise((resolve) => {
+      const video = videoRef.current;
+      if (!video || video.videoWidth === 0) {
+        resolve(null);
+        return;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(video, 0, 0);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
+    });
+  }
+
   async function handleNext() {
     if (!step) return;
     setUploading(true);
     setCameraError(null);
     try {
-      const blob = await stopRecordingAndCollect();
-      if (!blob) throw new Error("録画データを取得できませんでした。撮り直してください。");
-      const mimeType = mimeTypeRef.current;
-      const storageKey = await uploadAndGetKey(blob, mimeType, step.key);
+      let blob: Blob | null;
+      let mimeType: string;
+      if (step.kind === "photo") {
+        blob = await capturePhotoBlob();
+        mimeType = "image/jpeg";
+        if (!blob) throw new Error("撮影に失敗しました。もう一度お試しください。");
+      } else {
+        blob = await stopRecordingAndCollect();
+        mimeType = mimeTypeRef.current;
+        if (!blob) throw new Error("録画データを取得できませんでした。撮り直してください。");
+      }
+      const storageKey = await uploadAndGetKey(blob, mimeType, step.key, step.kind);
       advanceAfterUpload(step.key, { storageKey, mimeType });
     } catch (err: any) {
       setCameraError(err.message ?? "アップロードに失敗しました。撮り直してください。");
@@ -171,7 +213,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
       delete next[step.key];
       return next;
     });
-    startCameraAndRecording();
+    startCamera(step.kind);
   }
 
   /**
@@ -188,7 +230,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
 
   function handleFileFallback(file: File) {
     if (!step) return;
-    const storageKeyPromise = uploadAndGetKey(file, file.type, step.key);
+    const storageKeyPromise = uploadAndGetKey(file, file.type, step.key, step.kind);
     setUploading(true);
     storageKeyPromise
       .then((storageKey) => advanceAfterUpload(step.key, { storageKey, mimeType: file.type }))
@@ -386,7 +428,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
 
       <div className="relative rounded-xl overflow-hidden bg-camly-charcoal border border-camly-line aspect-[3/4] mb-4">
         <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-        {recording && (
+        {step.kind === "video" && recording && (
           <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             録画中
@@ -398,10 +440,12 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         <div className="mb-4">
           <p className="text-red-400 text-sm mb-2">{cameraError}</p>
           <label className="block">
-            <span className="block text-xs text-camly-inkMuted mb-1.5">代わりに動画ファイルを選択</span>
+            <span className="block text-xs text-camly-inkMuted mb-1.5">
+              代わりに{step.kind === "photo" ? "写真" : "動画"}ファイルを選択
+            </span>
             <input
               type="file"
-              accept="video/*"
+              accept={step.kind === "photo" ? "image/*" : "video/*"}
               capture="environment"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -425,10 +469,10 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         <button
           type="button"
           onClick={handleNext}
-          disabled={uploading || !recording}
+          disabled={uploading || (step.kind === "video" ? !recording : !cameraReady)}
           className="flex-[2] rounded-full bg-camly-accent text-camly-black font-bold py-4 text-sm disabled:opacity-50"
         >
-          {uploading ? "アップロード中…" : "次へ"}
+          {uploading ? "アップロード中…" : step.kind === "photo" ? "撮影して次へ" : "次へ"}
         </button>
       </div>
     </main>

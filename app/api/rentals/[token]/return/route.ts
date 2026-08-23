@@ -27,6 +27,8 @@ interface ReturnBody {
   surveyAnswers?: Record<string, unknown>;
 }
 
+const STEP_KIND_BY_KEY = new Map(RETURN_STEPS.map((s) => [s.key, s.kind]));
+
 export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
   const body = (await req.json()) as ReturnBody;
 
@@ -87,7 +89,8 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
     await tx.mediaAsset.createMany({
       data: body.steps.map((step) => ({
         rentalId: rental.id,
-        kind: "RETURN_VIDEO" as const,
+        // kindはクライアント申告ではなく、共有定義(RETURN_STEPS)から解決する(改ざん防止)。
+        kind: STEP_KIND_BY_KEY.get(step.stepKey) === "photo" ? ("RETURN_PHOTO" as const) : ("RETURN_VIDEO" as const),
         stepKey: step.stepKey,
         storageKey: step.storageKey,
         mimeType: step.mimeType,
