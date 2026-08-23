@@ -26,9 +26,33 @@ function pickSupportedMimeType(): string | null {
   return null;
 }
 
+const SATISFACTION_OPTIONS = ["1", "2", "3", "4", "5"];
+const SCENE_OPTIONS = ["記念撮影", "SNS投稿用", "観光・散策の記録", "宿泊先での思い出", "その他"];
+const PRICE_OPTIONS = ["安い", "ちょうどいい", "やや高い", "高い"];
+const REUSE_OPTIONS = ["ぜひ利用したい", "機会があれば", "わからない", "利用しないと思う"];
+
+interface SurveyState {
+  satisfaction: string;
+  scene: string;
+  priceFeeling: string;
+  reuseIntent: string;
+  wantedLocations: string;
+  comments: string;
+}
+
+const EMPTY_SURVEY: SurveyState = {
+  satisfaction: "",
+  scene: "",
+  priceFeeling: "",
+  reuseIntent: "",
+  wantedLocations: "",
+  comments: "",
+};
+
 export default function ReturnPage({ params }: { params: { token: string } }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [results, setResults] = useState<Record<string, StepResult>>({});
+  const [survey, setSurvey] = useState<SurveyState>(EMPTY_SURVEY);
   const [recording, setRecording] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -182,10 +206,11 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         if (!uploaded) throw new Error(`${s.label}が未撮影です`);
         return { stepKey: s.key, storageKey: uploaded.storageKey, mimeType: uploaded.mimeType };
       });
+      const surveyAnswers = Object.values(survey).some((v) => v) ? survey : undefined;
       const res = await fetch(`/api/rentals/${params.token}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ steps }),
+        body: JSON.stringify({ steps, surveyAnswers }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "return submission failed");
@@ -254,6 +279,80 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
           </p>
         </div>
 
+        <section className="mb-8">
+          <h2 className="text-lg font-bold mb-1">あなたの声がCamlyを作ります</h2>
+          <p className="text-camly-inkMuted text-xs mb-5">実証実験中につき、ご協力いただけると嬉しいです(すべて任意)。</p>
+
+          <div className="space-y-5">
+            <SurveyField label="今回のご利用、満足度は?">
+              <div className="flex gap-2">
+                {SATISFACTION_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.satisfaction === v}
+                    onClick={() => setSurvey({ ...survey, satisfaction: v })}
+                  />
+                ))}
+                <span className="text-xs text-camly-inkMuted self-center ml-1">(5が最高)</span>
+              </div>
+            </SurveyField>
+
+            <SurveyField label="今回の利用シーンに近いものは?">
+              <div className="flex flex-wrap gap-2">
+                {SCENE_OPTIONS.map((v) => (
+                  <PillButton key={v} label={v} selected={survey.scene === v} onClick={() => setSurvey({ ...survey, scene: v })} />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="料金(3時間¥990〜)は妥当だと感じましたか?">
+              <div className="flex flex-wrap gap-2">
+                {PRICE_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.priceFeeling === v}
+                    onClick={() => setSurvey({ ...survey, priceFeeling: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="また機会があればCamlyを利用したいですか?">
+              <div className="flex flex-wrap gap-2">
+                {REUSE_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.reuseIntent === v}
+                    onClick={() => setSurvey({ ...survey, reuseIntent: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="こんな場所にもあったら使いたい、というご希望があれば">
+              <textarea
+                value={survey.wantedLocations}
+                onChange={(e) => setSurvey({ ...survey, wantedLocations: e.target.value })}
+                rows={2}
+                placeholder="例: 空港、温泉旅館、キャンプ場 など"
+                className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent resize-none"
+              />
+            </SurveyField>
+
+            <SurveyField label="ご感想・気になった点・改善してほしい点など">
+              <textarea
+                value={survey.comments}
+                onChange={(e) => setSurvey({ ...survey, comments: e.target.value })}
+                rows={3}
+                className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent resize-none"
+              />
+            </SurveyField>
+          </div>
+        </section>
+
         {submitError && <p className="text-red-400 text-sm mb-4">{submitError}</p>}
 
         <button
@@ -264,6 +363,9 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         >
           {submitting ? "送信中…" : "返却を申請する"}
         </button>
+        <a href="/" className="block text-center text-camly-inkMuted text-[10px] underline mt-6">
+          Camlyについて
+        </a>
       </main>
     );
   }
@@ -326,5 +428,28 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         </button>
       </div>
     </main>
+  );
+}
+
+function SurveyField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs text-camly-inkMuted mb-2">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function PillButton({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
+        selected ? "bg-camly-accent border-camly-accent text-camly-black" : "border-camly-line text-camly-ink"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

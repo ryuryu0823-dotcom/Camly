@@ -227,6 +227,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           はじめる
         </button>
         <p className="text-camly-inkMuted text-[10px] mt-4">SONY Cyber-shot DSC-RX100M3 を今すぐレンタル</p>
+        <a href="/" className="text-camly-inkMuted text-[10px] underline mt-6">
+          Camlyについて
+        </a>
       </div>
     </main>
   );
