@@ -22,8 +22,16 @@ export const RETURN_STEPS: ReturnStep[] = [
     label: "付属品一式",
     instruction: "ストラップ・SDカード・SDカードリーダー・ケース・AC充電器・持ち運び用ケーブルを並べて映してください",
   },
-  { key: "door_closed", label: "扉を閉めた状態", instruction: "収納口の扉を閉めた状態を映してください" },
-  { key: "charger_connected", label: "充電ケーブル接続", instruction: "内部固定ケーブルを接続した状態を映してください" },
+  {
+    key: "charger_connected",
+    label: "充電ケーブル接続",
+    instruction: "扉を閉める前に、内部固定ケーブルを接続した状態を映してください",
+  },
+  {
+    key: "door_closed",
+    label: "扉を閉めて鍵を戻した状態",
+    instruction: "扉を閉め、鍵を元の場所に戻した状態を映してください",
+  },
 ];
 
 export const RETURN_STEP_KEYS = RETURN_STEPS.map((s) => s.key);
