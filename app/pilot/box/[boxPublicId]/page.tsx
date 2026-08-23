@@ -127,7 +127,7 @@ const INTRO_STEPS: [string, string][] = [
 const PRICING_TIERS: [string, string][] = [
   ["3時間以内", "¥990"],
   ["12時間以内", "¥1,490"],
-  ["24時間以内", "¥1,990"],
+  ["12時間以降", "¥1,990"],
 ];
 
 function IntroScreen({ onStart }: { onStart: () => void }) {

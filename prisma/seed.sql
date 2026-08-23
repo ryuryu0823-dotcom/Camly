@@ -23,14 +23,15 @@ VALUES ('acc_1', 'dev_rx100m3_1', '["strap","sd_card","sd_card_reader","case","a
 INSERT INTO pricing_rules (id, "locationId", tier, name, "isStayRule", "isActive")
 VALUES ('pr_nasu_stay', 'loc_nasu', 'STANDARD', 'nasu room MINI pilot v1 (stay)', true, true);
 
--- §7: 3時間未満990円 / 12時間未満1,490円 / 24時間まで1,990円 / 以後24時間ごとに1,500円
+-- §7: 3時間未満990円 / 12時間未満1,490円 / それ以降は時間に関わらず一律1,990円
+-- (最終tierのuntilMinutesは実質無制限の値。additionalPer24hJpy=0で24時間超過分の追加課金を無効化)
 INSERT INTO pricing_versions (id, "pricingRuleId", version, tiers, "additionalPer24hJpy", currency)
 VALUES (
   'pv_nasu_stay_1',
   'pr_nasu_stay',
   1,
-  '[{"untilMinutes":180,"priceJpy":990},{"untilMinutes":720,"priceJpy":1490},{"untilMinutes":1440,"priceJpy":1990}]',
-  1500,
+  '[{"untilMinutes":180,"priceJpy":990},{"untilMinutes":720,"priceJpy":1490},{"untilMinutes":999999,"priceJpy":1990}]',
+  0,
   'JPY'
 );
 
