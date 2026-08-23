@@ -2,22 +2,33 @@
 
 /**
  * 返却承認ボタン(§10, §15)。
- * 既存の POST /api/admin/rentals/:id/approve-return を呼ぶ。管理者が動画を見て2択で判断する:
- * - 「承認して利用料を請求」: finalAmountJpyだけpartial captureし、¥50,000与信枠の残りは自動解放
+ * 既存の POST /api/admin/rentals/:id/approve-return を呼ぶ。管理者が動画を見て3択で判断する:
+ * - 「利用料のみ請求」: finalAmountJpyだけpartial captureし、¥50,000与信枠の残りは自動解放(通常ケース)
+ * - 「与信枠を全額請求」: ¥50,000与信枠を全額capture(破損・紛失等)
  * - 「請求せず与信枠を解除」: 何も請求せず、¥50,000与信枠を丸ごと解放(PaymentIntentをcancel)
  *
  * ⚠ 管理者認証未実装(admin/page.tsxと同じTODO)。adminUserIdは簡易な入力欄で受け取る。
  */
 import { useState } from "react";
 
-export function ApproveButton({ rentalId, finalAmountJpy }: { rentalId: string; finalAmountJpy: number | null }) {
+type ApproveAction = "capture_usage" | "capture_full" | "waive";
+
+export function ApproveButton({
+  rentalId,
+  finalAmountJpy,
+  authorizedAmountJpy,
+}: {
+  rentalId: string;
+  finalAmountJpy: number | null;
+  authorizedAmountJpy: number | null;
+}) {
   const [adminUserId, setAdminUserId] = useState("");
   const [reason, setReason] = useState("");
-  const [submittingAction, setSubmittingAction] = useState<"capture" | "waive" | null>(null);
+  const [submittingAction, setSubmittingAction] = useState<ApproveAction | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ action: string; capturedJpy: number } | null>(null);
+  const [done, setDone] = useState<{ action: ApproveAction; capturedJpy: number } | null>(null);
 
-  async function handleSubmit(action: "capture" | "waive") {
+  async function handleSubmit(action: ApproveAction) {
     if (!adminUserId) {
       setError("管理者ID(AdminUser.id)を入力してください。");
       return;
@@ -41,13 +52,12 @@ export function ApproveButton({ rentalId, finalAmountJpy }: { rentalId: string; 
   }
 
   if (done) {
-    return (
-      <p className="text-camly-accent font-bold text-sm">
-        {done.action === "waive"
-          ? "請求せず¥50,000与信枠を全額解放しました。"
-          : `¥${done.capturedJpy.toLocaleString()}を請求し、与信枠の残りを解放しました。`}
-      </p>
-    );
+    const messages: Record<ApproveAction, string> = {
+      waive: "請求せず与信枠を全額解放しました。",
+      capture_full: `与信枠¥${done.capturedJpy.toLocaleString()}を全額請求しました。`,
+      capture_usage: `利用料¥${done.capturedJpy.toLocaleString()}を請求し、与信枠の残りを解放しました。`,
+    };
+    return <p className="text-camly-accent font-bold text-sm">{messages[done.action]}</p>;
   }
 
   return (
@@ -69,7 +79,29 @@ export function ApproveButton({ rentalId, finalAmountJpy }: { rentalId: string; 
         />
       </label>
       {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      <button
+        type="button"
+        onClick={() => handleSubmit("capture_usage")}
+        disabled={submittingAction !== null}
+        className="w-full rounded-full bg-camly-accent text-camly-black font-bold py-3 text-sm disabled:opacity-50"
+      >
+        {submittingAction === "capture_usage"
+          ? "処理中…"
+          : `利用料${finalAmountJpy != null ? `¥${finalAmountJpy.toLocaleString()}` : ""}のみ請求(通常)`}
+      </button>
+
       <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => handleSubmit("capture_full")}
+          disabled={submittingAction !== null}
+          className="flex-1 rounded-full border border-camly-line text-camly-ink font-bold py-3 text-sm disabled:opacity-50"
+        >
+          {submittingAction === "capture_full"
+            ? "処理中…"
+            : `与信枠${authorizedAmountJpy != null ? `¥${authorizedAmountJpy.toLocaleString()}` : ""}を全額請求`}
+        </button>
         <button
           type="button"
           onClick={() => handleSubmit("waive")}
@@ -77,16 +109,6 @@ export function ApproveButton({ rentalId, finalAmountJpy }: { rentalId: string; 
           className="flex-1 rounded-full border border-camly-line text-camly-ink font-bold py-3 text-sm disabled:opacity-50"
         >
           {submittingAction === "waive" ? "処理中…" : "請求せず与信枠を解除"}
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSubmit("capture")}
-          disabled={submittingAction !== null}
-          className="flex-[2] rounded-full bg-camly-accent text-camly-black font-bold py-3 text-sm disabled:opacity-50"
-        >
-          {submittingAction === "capture"
-            ? "処理中…"
-            : `承認して利用料${finalAmountJpy != null ? `¥${finalAmountJpy.toLocaleString()}` : ""}を請求`}
         </button>
       </div>
     </div>

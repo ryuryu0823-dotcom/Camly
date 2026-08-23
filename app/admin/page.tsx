@@ -11,21 +11,37 @@
  * - QR閲覧→入力→与信成功→貸出→返却のfunnel可視化
  */
 import { prisma } from "@/lib/db";
+import { UnlockCodeEditor } from "./UnlockCodeEditor";
 
 // 貸出状況を都度確認する運用画面のため、キャッシュせず毎回最新のDB状態を取得する。
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const rentals = await prisma.rental.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: { device: true, customer: true, checkoutCompartment: { include: { box: { include: { location: true } } } } },
-  });
+  const [rentals, boxes] = await Promise.all([
+    prisma.rental.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { device: true, customer: true, checkoutCompartment: { include: { box: { include: { location: true } } } } },
+    }),
+    prisma.box.findMany({ include: { location: true }, orderBy: { label: "asc" } }),
+  ]);
 
   return (
     <main className="min-h-screen px-6 py-12 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">管理画面</h1>
       <p className="text-camly-inkMuted text-sm mb-8">⚠ 認証未実装。本番投入前に必ずRBACガードを追加すること。</p>
+
+      <h2 className="text-lg font-bold mb-4">キーボックス暗証番号</h2>
+      <div className="grid gap-4 mb-10 sm:grid-cols-2">
+        {boxes.map((box) => (
+          <div key={box.id}>
+            <p className="text-xs text-camly-inkMuted mb-2">
+              {box.location.name} / {box.label}
+            </p>
+            <UnlockCodeEditor boxId={box.id} currentCode={box.currentPhysicalUnlockCode} />
+          </div>
+        ))}
+      </div>
 
       <h2 className="text-lg font-bold mb-4">貸出一覧(直近50件)</h2>
       <div className="overflow-x-auto rounded-xl border border-camly-line">

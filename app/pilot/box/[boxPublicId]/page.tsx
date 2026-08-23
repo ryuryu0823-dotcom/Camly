@@ -119,9 +119,15 @@ export default function PilotBoxPage({ params }: { params: { boxPublicId: string
 }
 
 const INTRO_STEPS: [string, string][] = [
-  ["01", "お名前とカード情報を登録"],
-  ["02", "その場でボックスが解錠"],
-  ["03", "カメラを持って、撮影へ"],
+  ["01", "決済(お名前とカード情報を登録)"],
+  ["02", "表示された暗証番号でキーボックスを解錠"],
+  ["03", "カメラを楽しむ"],
+];
+
+const PRICING_TIERS: [string, string][] = [
+  ["3時間以内", "¥990"],
+  ["12時間以内", "¥1,490"],
+  ["24時間以内", "¥1,990"],
 ];
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
@@ -151,13 +157,25 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           スマホひとつでその場からレンタルできます。
         </p>
 
-        <div className="w-full rounded-xl border border-camly-line bg-camly-charcoal/60 backdrop-blur-sm divide-y divide-camly-line mb-10">
+        <div className="w-full rounded-xl border border-camly-line bg-camly-charcoal/60 backdrop-blur-sm divide-y divide-camly-line mb-6">
           {INTRO_STEPS.map(([num, text]) => (
             <div key={num} className="flex items-center gap-4 px-5 py-3.5 text-left">
               <span className="text-camly-accentSoft font-bold text-sm shrink-0 w-5">{num}</span>
               <p className="text-xs text-camly-ink">{text}</p>
             </div>
           ))}
+        </div>
+
+        <div className="w-full rounded-xl border border-camly-line px-5 py-4 mb-10">
+          <p className="text-[10px] text-camly-inkMuted tracking-wider mb-3">料金(利用時間に応じて自動確定)</p>
+          <div className="flex justify-between gap-2">
+            {PRICING_TIERS.map(([label, price]) => (
+              <div key={label} className="flex-1 text-left">
+                <p className="text-[10px] text-camly-inkMuted mb-0.5">{label}</p>
+                <p className="text-lg font-bold text-camly-accent tabular-nums">{price}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <button

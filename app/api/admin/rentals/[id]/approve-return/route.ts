@@ -2,11 +2,15 @@
  * POST /api/admin/rentals/:id/approve-return
  *
  * 管理者による返却確認・承認(§10, §15)。
- * - AI_REVIEW_REQUIRED状態のRentalを、管理者が動画を確認したうえで判断する。
- * - action="capture"(既定): finalAmountJpy(+ Care)だけをpartial captureする(§8.1)。残枠は自動解放される。
+ * AI_REVIEW_REQUIRED状態のRentalを、管理者が動画を確認したうえで3択で判断する:
+ * - action="capture_usage"(既定): finalAmountJpy(利用料+Care)だけをpartial captureする(§8.1)。
+ *   残りの与信枠は自動解放される。通常の正常返却で使う。
+ * - action="capture_full": ¥50,000与信枠を全額captureする。破損・紛失等、保証枠を
+ *   全額請求すべきケースで使う。
  * - action="waive": 何も請求せず、¥50,000与信枠を丸ごと解放する(PaymentIntentをcancel)。
- *   利用料を請求するかどうかは管理者がこの2択で都度判断する(破損時の増額請求は別途DamageCase
- *   起票フロー(未実装。Step5以降)の対象)。
+ *
+ * 部分的な増額請求(利用料+修理実費の一部だけ、等)は別途DamageCase起票フロー
+ * (未実装。Step5以降)の対象。
  *
  * 認証: このMVPでは呼び出し元でAdminUser認証済みである前提(実際のRBACミドルウェアはStep2の
  * 残タスクとして別途実装が必要。ここではadminUserIdをボディで受け取る簡易実装に留める)。
@@ -18,9 +22,11 @@ import { capturePartialAmount, cancelAuthorization } from "@/lib/stripe/client";
 import { writeRentalEventBestEffort, writeAuditLogBestEffort } from "@/lib/audit";
 import { generateIdempotencyKey } from "@/lib/ids";
 
+type ApproveAction = "capture_usage" | "capture_full" | "waive";
+
 interface ApproveBody {
   adminUserId: string;
-  action?: "capture" | "waive";
+  action?: ApproveAction;
   reason?: string;
 }
 
@@ -29,15 +35,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!body.adminUserId) {
     return NextResponse.json({ error: "adminUserId is required (audit trail)" }, { status: 400 });
   }
-  const action = body.action ?? "capture";
+  const action: ApproveAction = body.action ?? "capture_usage";
 
   const rental = await prisma.rental.findUnique({ where: { id: params.id } });
   if (!rental) return NextResponse.json({ error: "rental not found" }, { status: 404 });
   if (rental.status !== "AI_REVIEW_REQUIRED") {
     return NextResponse.json({ error: `cannot approve from status ${rental.status}` }, { status: 409 });
   }
-  if (!rental.paymentIntentId || rental.finalAmountJpy == null) {
-    return NextResponse.json({ error: "rental missing paymentIntentId or finalAmountJpy" }, { status: 500 });
+  if (!rental.paymentIntentId || rental.finalAmountJpy == null || rental.authorizedAmountJpy == null) {
+    return NextResponse.json(
+      { error: "rental missing paymentIntentId, finalAmountJpy, or authorizedAmountJpy" },
+      { status: 500 }
+    );
   }
 
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -45,7 +54,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "STRIPE_SECRET_KEY not configured" }, { status: 500 });
   }
 
-  const capturedJpy = action === "waive" ? 0 : rental.finalAmountJpy;
+  const capturedJpy =
+    action === "waive" ? 0 : action === "capture_full" ? rental.authorizedAmountJpy : rental.finalAmountJpy;
   try {
     if (action === "waive") {
       await cancelAuthorization(
@@ -57,8 +67,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         { secretKey: stripeSecretKey },
         {
           paymentIntentId: rental.paymentIntentId,
-          amountToCaptureJpy: rental.finalAmountJpy,
-          idempotencyKey: generateIdempotencyKey("capture", rental.id),
+          amountToCaptureJpy: capturedJpy,
+          idempotencyKey: generateIdempotencyKey(`capture-${action}`, rental.id),
         }
       );
     }
@@ -105,13 +115,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     fromStatus: "AI_REVIEW_REQUIRED",
     toStatus: "COMPLETED",
     actor: `admin:${body.adminUserId}`,
-    reason: body.reason ?? (action === "waive" ? "manual_return_waived" : "manual_return_approved"),
+    reason: body.reason ?? `manual_return_${action}`,
     metadata: { action, capturedJpy },
   });
   await writeAuditLogBestEffort({
     actorType: "admin",
     actorId: body.adminUserId,
-    action: action === "waive" ? "rental.manual_return_waive" : "rental.manual_return_approve",
+    action: `rental.manual_return_${action}`,
     targetType: "rental",
     targetId: rental.id,
     reasonText: body.reason,
