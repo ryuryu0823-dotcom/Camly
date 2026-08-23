@@ -11,6 +11,7 @@ import { createPresignedGetUrl } from "@/lib/storage/s3-presign";
 import { RETURN_STEPS } from "@/lib/return-steps";
 import { ApproveButton } from "./ApproveButton";
 import { ForceReleaseButton } from "./ForceReleaseButton";
+import { AiReviewPanel } from "./AiReviewPanel";
 
 // レビュー・承認操作を行う運用画面のため、キャッシュせず毎回最新のDB状態を取得する。
 export const dynamic = "force-dynamic";
@@ -95,6 +96,16 @@ export default async function AdminRentalDetailPage({ params }: { params: { id: 
             <li>扉を閉めた状態の撮影: {rental.returnInspection.doorClosed ? "✓" : "✗"}</li>
             <li>充電ケーブル接続の撮影: {rental.returnInspection.chargerConnected ? "✓" : "✗"}</li>
           </ul>
+        </section>
+      )}
+
+      {rental.returnInspection && (
+        <section className="mb-10">
+          <AiReviewPanel
+            rentalId={rental.id}
+            initialResult={rental.returnInspection.aiResult}
+            initialNotes={rental.returnInspection.aiNotes}
+          />
         </section>
       )}
 
