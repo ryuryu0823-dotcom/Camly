@@ -86,13 +86,13 @@ const PAGE_STYLES = `
     display:flex; align-items:center; justify-content:center;
     opacity:0.6;
   }
-  .lp .ring{
+  .lp .deco-ring{
     position:absolute;
     border-radius:50%;
     border:1px solid rgba(53,48,43,0.5);
   }
-  .lp .ring.r1{width:640px; height:640px; transform:translateX(18%);}
-  .lp .ring.r2{width:440px; height:440px; border-color:rgba(53,48,43,0.4); transform:translateX(18%);}
+  .lp .deco-ring.r1{width:640px; height:640px; transform:translateX(18%);}
+  .lp .deco-ring.r2{width:440px; height:440px; border-color:rgba(53,48,43,0.4); transform:translateX(18%);}
   .lp .glow{
     position:absolute;
     width:260px; height:260px;
@@ -262,8 +262,8 @@ export default function HomePage() {
       <main>
         <section className="hero wrap">
           <div className="hero-rings" aria-hidden="true">
-            <div className="ring r1" />
-            <div className="ring r2" />
+            <div className="deco-ring r1" />
+            <div className="deco-ring r2" />
             <div className="glow" />
           </div>
 

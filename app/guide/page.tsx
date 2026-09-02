@@ -136,9 +136,9 @@ const PAGE_STYLES = `
 
   .gd .hero{position:relative; padding-block:clamp(3rem,7vw,5rem) clamp(2.5rem,5vw,3.5rem); overflow:hidden;}
   .gd .hero-rings{pointer-events:none; position:absolute; inset:0; display:flex; align-items:center; justify-content:flex-end; opacity:0.6;}
-  .gd .ring{position:absolute; border-radius:50%; border:1px solid rgba(53,48,43,0.5);}
-  .gd .ring.r1{width:520px; height:520px; transform:translateX(26%);}
-  .gd .ring.r2{width:360px; height:360px; border-color:rgba(53,48,43,0.4); transform:translateX(26%);}
+  .gd .deco-ring{position:absolute; border-radius:50%; border:1px solid rgba(53,48,43,0.5);}
+  .gd .deco-ring.r1{width:520px; height:520px; transform:translateX(26%);}
+  .gd .deco-ring.r2{width:360px; height:360px; border-color:rgba(53,48,43,0.4); transform:translateX(26%);}
   .gd .glow{position:absolute; width:220px; height:220px; border-radius:50%; background:var(--accent); opacity:0.12; filter:blur(60px); transform:translateX(20%);}
 
   .gd .kicker{position:relative; z-index:1; color:var(--accent); font-size:0.8rem; font-weight:700; letter-spacing:0.2em; margin-bottom:1.25rem;}
@@ -262,8 +262,8 @@ export default function GuidePage() {
       <main>
         <section className="hero wrap">
           <div className="hero-rings" aria-hidden="true">
-            <div className="ring r1" />
-            <div className="ring r2" />
+            <div className="deco-ring r1" />
+            <div className="deco-ring r2" />
             <div className="glow" />
           </div>
 
