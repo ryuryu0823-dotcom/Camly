@@ -2,11 +2,11 @@
  * 導入検討ページ(camly.jp/partners)。
  * 元はClaude Artifactの「Camlyを導入する」ページをそのまま移植したもの
  * (デザイン・コピーは https://claude.ai/code/artifact/01f88b9c-1086-4785-84b6-adcda9da780e 由来)。
+ * 他ページ(/, /guide)とは異なり、このページのみ白背景テーマ。
  */
 import RevealOnScroll from "../_components/RevealOnScroll";
 
 const PAIN_CARDS = [
-  ["ゲストから「カメラ貸してもらえますか」と聞かれることがある", "その都度スタッフが対応するのは負担になりがちです。"],
   ["SNS映えする瞬間なのに、スマホではうまく撮れない", "暗い店内や夜景、動きのあるシーンでは満足のいく写真が残しにくく、滞在の満足度に影響します。"],
   ["貸出用カメラを自前で用意すると、管理が大変", "破損・紛失のリスクや充電・清掃の手間まで、施設側で抱え込むことになります。"],
   ["他の施設と差がつく、新しいアメニティを探している", "Wi-Fiやアメニティグッズだけでは伝わらない、体験としての差別化がほしい。"],
@@ -35,17 +35,18 @@ const FAQS = [
 const PAGE_STYLES = `
   :root{
     --black:#141210;
-    --charcoal:#1e1b18;
-    --line:#35302b;
-    --ink:#f5f1ea;
-    --ink-muted:#a69c8d;
-    --accent:#ff5a1f;
-    --accent-soft:#ffb08a;
+    --bg:#ffffff;
+    --charcoal:#f5f2ec;
+    --line:#e6e0d3;
+    --ink:#181410;
+    --ink-muted:#6d6255;
+    --accent:#ea580c;
+    --accent-soft:#b8460c;
     --font-heading:"Hiragino Kaku Gothic ProN","Hiragino Sans",-apple-system,BlinkMacSystemFont,"Yu Gothic",sans-serif;
   }
   .pt *{box-sizing:border-box;}
-  .pt{background:var(--black); color:var(--ink); line-height:1.7;}
-  .pt ::selection{background:var(--accent); color:var(--black);}
+  .pt{background:var(--bg); color:var(--ink); line-height:1.7;}
+  .pt ::selection{background:var(--accent); color:#fff;}
   .pt a{color:inherit; text-decoration:none;}
   .pt a:focus-visible, .pt button:focus-visible{outline:2px solid var(--accent); outline-offset:3px;}
   .pt p{margin:0;}
@@ -54,11 +55,11 @@ const PAGE_STYLES = `
   .pt .wrap{max-width:1120px; margin:0 auto; padding-inline:clamp(1.25rem,4vw,4rem);}
   .pt .border-t{border-top:1px solid var(--line);}
 
-  .pt .eyebrow{color:var(--accent); font-size:0.75rem; font-weight:700; letter-spacing:0.2em; margin-bottom:0.75rem;}
+  .pt .eyebrow{color:var(--accent-soft); font-size:0.75rem; font-weight:700; letter-spacing:0.2em; margin-bottom:0.75rem;}
 
   .pt header{
     position:sticky; top:0; z-index:20;
-    background:rgba(20,18,16,0.82);
+    background:rgba(255,255,255,0.86);
     backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line);
   }
@@ -84,27 +85,27 @@ const PAGE_STYLES = `
     padding:0.7em 1.6em; white-space:nowrap;
   }
   .pt .pill-sm{padding:0.55em 1.3em; font-size:0.78rem;}
-  .pt .pill-accent{background:var(--accent); color:var(--black);}
+  .pt .pill-accent{background:var(--accent); color:#fff;}
   .pt .pill-outline{border:1px solid var(--line); color:var(--ink);}
   .pt .pill-outline:hover{border-color:var(--accent);}
 
   .pt .hero{position:relative; padding-block:clamp(3rem,8vw,6rem) clamp(2.5rem,6vw,4rem); overflow:hidden;}
-  .pt .hero-rings{pointer-events:none; position:absolute; inset:0; display:flex; align-items:center; justify-content:flex-end; opacity:0.6;}
-  .pt .deco-ring{position:absolute; border-radius:50%; border:1px solid rgba(53,48,43,0.5);}
+  .pt .hero-rings{pointer-events:none; position:absolute; inset:0; display:flex; align-items:center; justify-content:flex-end; opacity:0.7;}
+  .pt .deco-ring{position:absolute; border-radius:50%; border:1px solid rgba(53,48,43,0.14);}
   .pt .deco-ring.r1{width:560px; height:560px; transform:translateX(28%);}
-  .pt .deco-ring.r2{width:380px; height:380px; border-color:rgba(53,48,43,0.4); transform:translateX(28%);}
-  .pt .glow{position:absolute; width:240px; height:240px; border-radius:50%; background:var(--accent); opacity:0.12; filter:blur(60px); transform:translateX(20%);}
+  .pt .deco-ring.r2{width:380px; height:380px; border-color:rgba(53,48,43,0.11); transform:translateX(28%);}
+  .pt .glow{position:absolute; width:240px; height:240px; border-radius:50%; background:var(--accent); opacity:0.08; filter:blur(60px); transform:translateX(20%);}
 
-  .pt .kicker{position:relative; z-index:1; color:var(--accent); font-size:0.8rem; font-weight:700; letter-spacing:0.2em; margin-bottom:1.25rem;}
+  .pt .kicker{position:relative; z-index:1; color:var(--accent-soft); font-size:0.8rem; font-weight:700; letter-spacing:0.2em; margin-bottom:1.25rem;}
   .pt .hero h1{position:relative; z-index:1; font-size:clamp(2.1rem,5.4vw,3.8rem); font-weight:800; line-height:1.25; text-wrap:balance; margin:0;}
   .pt .hero-sub{position:relative; z-index:1; margin-top:1.4rem; max-width:38em; color:var(--ink-muted); font-size:clamp(1rem,1.5vw,1.1rem);}
   .pt .cta-row{position:relative; z-index:1; display:flex; flex-wrap:wrap; gap:1rem; margin-top:2.25rem;}
 
   .pt .specs{position:relative; z-index:1; margin-top:clamp(2.5rem,6vw,3.5rem); display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; max-width:700px;}
   @media (max-width:640px){ .pt .specs{grid-template-columns:1fr;} }
-  .pt .spec{border:1px solid var(--line); border-radius:0.9rem; padding:1.1rem 1.25rem;}
+  .pt .spec{border:1px solid var(--line); border-radius:0.9rem; padding:1.1rem 1.25rem; background:var(--charcoal);}
   .pt .spec .k{font-size:0.72rem; color:var(--ink-muted);}
-  .pt .spec .v{margin-top:0.4rem; font-size:1.15rem; font-weight:800; color:var(--accent); line-height:1.3;}
+  .pt .spec .v{margin-top:0.4rem; font-size:1.15rem; font-weight:800; color:var(--accent-soft); line-height:1.3;}
 
   .pt section.block{padding-block:clamp(3rem,7vw,5rem);}
   .pt section.block h2{font-size:clamp(1.4rem,2.6vw,1.9rem); font-weight:800; margin:0 0 1.75rem; text-wrap:balance;}
@@ -149,15 +150,14 @@ const PAGE_STYLES = `
     justify-content:space-between;
     align-items:flex-start;
   }
-  .pt .future-frame{border:1px solid var(--line); border-radius:1.25rem; overflow:hidden; background:var(--charcoal);}
+  .pt .future-frame{border:1px solid var(--line); border-radius:1.25rem; overflow:hidden; background:var(--charcoal); max-width:360px;}
   .pt .future-frame img{display:block; width:100%; height:auto;}
-  .pt .future-caption{padding:0.9rem 1.25rem; color:var(--ink-muted); font-size:0.8rem;}
   .pt .case-card .loc{color:var(--ink-muted); font-size:0.82rem; margin-bottom:0.3rem;}
   .pt .case-card h3{font-size:1.3rem; font-weight:800; margin:0 0 0.75rem;}
   .pt .case-card p{color:var(--ink-muted); font-size:0.94rem; max-width:32em;}
   .pt .case-badge{
     flex-shrink:0;
-    border:1px solid rgba(255,90,31,0.4);
+    border:1px solid rgba(234,88,12,0.35);
     border-radius:999px;
     padding:0.4em 0.9em;
     font-size:0.72rem;
@@ -170,14 +170,14 @@ const PAGE_STYLES = `
   @media (max-width:900px){ .pt .flow-grid{grid-template-columns:repeat(2,1fr);} }
   @media (max-width:520px){ .pt .flow-grid{grid-template-columns:1fr;} }
   .pt .flow-card{border:1px solid var(--line); border-radius:1rem; padding:1.5rem 1.4rem;}
-  .pt .flow-card .step-n{font-size:0.72rem; font-weight:700; color:var(--accent); letter-spacing:0.1em; margin-bottom:0.75rem;}
+  .pt .flow-card .step-n{font-size:0.72rem; font-weight:700; color:var(--accent-soft); letter-spacing:0.1em; margin-bottom:0.75rem;}
   .pt .flow-card h3{font-size:1rem; font-weight:700; margin:0 0 0.5rem;}
   .pt .flow-card p{color:var(--ink-muted); font-size:0.87rem; line-height:1.65;}
 
   .pt .faq-item{border-top:1px solid var(--line); padding-block:1.5rem;}
   .pt .faq-item:last-child{padding-bottom:0;}
   .pt .faq-item .q{display:flex; gap:0.75rem; font-weight:700; margin-bottom:0.5rem;}
-  .pt .faq-item .q .mark{color:var(--accent); flex-shrink:0;}
+  .pt .faq-item .q .mark{color:var(--accent-soft); flex-shrink:0;}
   .pt .faq-item .a{display:flex; gap:0.75rem; color:var(--ink-muted); font-size:0.94rem;}
   .pt .faq-item .a .mark{color:var(--ink-muted); flex-shrink:0;}
 
@@ -187,8 +187,8 @@ const PAGE_STYLES = `
     display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1.5rem;
   }
   .pt .contact-card .k{font-size:0.75rem; color:var(--ink-muted); margin-bottom:0.4rem;}
-  .pt .contact-card .email{font-size:clamp(1.15rem,2.6vw,1.5rem); font-weight:700;}
-  .pt .contact-card .email:hover{color:var(--accent-soft);}
+  .pt .contact-card .email{font-size:clamp(1.15rem,2.6vw,1.5rem); font-weight:700; color:var(--accent-soft);}
+  .pt .contact-card .email:hover{color:var(--accent);}
   .pt .contact-card .hint{color:var(--ink-muted); font-size:0.85rem; text-align:right;}
 
   .pt footer{padding-block:2rem;}
@@ -216,7 +216,7 @@ export default function PartnersPage() {
       <header>
         <div className="wrap header-inner">
           <span className="logo">
-            <img className="logo-mark" src="/camly-logo.png" alt="Camly" />
+            <img className="logo-mark" src="/camly-logo-dark.png" alt="Camly" />
             <small>FOR PARTNERS</small>
           </span>
           <div className="header-links">
@@ -346,11 +346,10 @@ export default function PartnersPage() {
           <div data-reveal="true">
             <p className="eyebrow">FUTURE / PHASE B</p>
             <h2>将来的には、スマートボックス化も構想中。</h2>
-            <p className="lede">現在は物理キー式のBOX(Phase A)で運用していますが、複数台のカメラを収容できるスマートボックスへの展開も構想しています。以下は現時点のコンセプトデザインで、仕様・導入時期は未確定です。</p>
+            <p className="lede">現在は物理キー式のBOX(Phase A)で運用していますが、複数台のカメラを収容できるスマートボックスへの展開も構想しています。仕様・導入時期は未確定です。</p>
           </div>
           <div className="future-frame" data-reveal="true">
-            <img src="/marketing/box-concept.jpg" alt="Camly 10-BAYスマートボックスのコンセプトデザイン(検討中)" />
-            <p className="future-caption">Camly 10-BAY — コンセプトデザイン(検討中・仕様未確定)</p>
+            <img src="/marketing/box-concept.jpg" alt="Camly 10-BAYスマートボックスのコンセプト" />
           </div>
         </section>
 
@@ -416,7 +415,7 @@ export default function PartnersPage() {
         <div className="footer-inner">
           <div>
             <p className="logo">
-              <img className="logo-mark" src="/camly-logo.png" alt="Camly" />
+              <img className="logo-mark" src="/camly-logo-dark.png" alt="Camly" />
               <small>CAPTURE YOUR MOMENT ANYWHERE</small>
             </p>
             <p className="foot-note">
