@@ -293,12 +293,7 @@ export default function HomePage() {
             <a className="pill pill-accent" href="/pilot/box/box_pub_3e9d7b">
               カメラを借りる
             </a>
-            <a
-              className="pill pill-outline"
-              href="https://claude.ai/code/artifact/01f88b9c-1086-4785-84b6-adcda9da780e"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a className="pill pill-outline" href="/partners">
               導入・提携について相談する
             </a>
           </div>
@@ -479,12 +474,7 @@ export default function HomePage() {
               <p className="eyebrow">設置をご検討の事業者様へ</p>
               <p>宿泊施設・クラブ・撮影目的地など、お客様の記憶に残る瞬間が生まれる場所への設置を想定しています。運用モデルについてご相談させてください。</p>
               <p style={{ marginTop: "1rem" }}>
-                <a
-                  className="pill pill-outline pill-sm"
-                  href="https://claude.ai/code/artifact/01f88b9c-1086-4785-84b6-adcda9da780e"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a className="pill pill-outline pill-sm" href="/partners">
                   導入メリットを詳しく見る →
                 </a>
               </p>
