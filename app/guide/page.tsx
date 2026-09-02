@@ -227,8 +227,9 @@ const PAGE_STYLES = `
   .gd .footer-inner .foot-note{max-width:34em;}
   .gd .footer-meta{text-align:right;}
 
-  .gd [data-reveal]{opacity:0; transform:translateY(12px); transition:opacity 0.6s ease, transform 0.6s ease;}
-  .gd [data-reveal].is-visible{opacity:1; transform:none;}
+  .gd [data-reveal]{opacity:1; transform:none;}
+  .gd [data-reveal].reveal-armed{opacity:0; transform:translateY(12px); transition:opacity 0.6s ease, transform 0.6s ease;}
+  .gd [data-reveal].reveal-armed.is-visible{opacity:1; transform:none;}
 
   @media (prefers-reduced-motion: reduce){
     .gd *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}

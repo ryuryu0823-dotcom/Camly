@@ -230,8 +230,9 @@ const PAGE_STYLES = `
   .lp .footer-inner .foot-note{max-width:34em;}
   .lp .footer-meta{text-align:right;}
 
-  .lp [data-reveal]{opacity:0; transform:translateY(12px); transition:opacity 0.6s ease, transform 0.6s ease;}
-  .lp [data-reveal].is-visible{opacity:1; transform:none;}
+  .lp [data-reveal]{opacity:1; transform:none;}
+  .lp [data-reveal].reveal-armed{opacity:0; transform:translateY(12px); transition:opacity 0.6s ease, transform 0.6s ease;}
+  .lp [data-reveal].reveal-armed.is-visible{opacity:1; transform:none;}
 
   @media (prefers-reduced-motion: reduce){
     .lp *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
