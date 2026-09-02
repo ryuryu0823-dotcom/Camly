@@ -182,7 +182,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
         <p className="text-camly-accentSoft text-[11px] tracking-[0.3em] font-bold mb-5">NASU ROOM MINI</p>
 
-        <h1 className="text-6xl font-bold tracking-tight mb-4">Camly</h1>
+        <img src="/camly-logo.png" alt="Camly" className="h-14 w-auto mb-4" />
 
         <p className="text-camly-ink text-base leading-relaxed mb-1 text-balance">
           あらゆる場所に、
@@ -228,7 +228,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         </button>
         <p className="text-camly-inkMuted text-[10px] mt-4">SONY Cyber-shot DSC-RX100M3 を今すぐレンタル</p>
         <a
-          href="/"
+          href="https://claude.ai/code/artifact/2491aefb-65b6-4dd6-a960-5463935b108f"
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-full border border-camly-line text-camly-ink text-xs font-bold px-5 py-2.5 mt-6"
         >
           Camlyについて詳しく見る
