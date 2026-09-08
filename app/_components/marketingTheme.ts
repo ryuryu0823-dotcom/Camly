@@ -128,16 +128,29 @@ export const MARKETING_STYLES = `
   .site .highlight:hover .ring{border-color:var(--accent); transform:translateY(-3px);}
   .site .highlight span{font-size:0.74rem; color:var(--ink-muted); text-align:center; line-height:1.3;}
 
-  /* サイトに来て最初に目に入る、大きなロゴ。Instagramのロゴ投稿を参考に、控えめに動きをつけて登場させる */
-  .site .hero-logo{
-    position:relative; z-index:1; display:block; margin:0 auto 2rem;
-    height:clamp(52px,11vw,108px); width:auto;
-    animation:hero-logo-in 1s cubic-bezier(0.16,1,0.3,1) both;
+  /*
+   * サイトを開いた瞬間に画面いっぱいに出るロゴのスプラッシュ。実体のホーム画面(ヘッダー・hero)の上に
+   * 固定表示し、一定時間で自動フェードアウトしてホームを見せる(BrandIntro.tsx側でタイマー制御)。
+   */
+  .site .brand-intro{
+    position:fixed; inset:0; z-index:100;
+    background:var(--black); color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:2rem; cursor:pointer;
+    opacity:1; transition:opacity 0.6s ease;
   }
-  @keyframes hero-logo-in{
-    0%{opacity:0; transform:scale(0.82) translateY(10px);}
-    100%{opacity:1; transform:scale(1) translateY(0);}
+  .site .brand-intro.is-hiding{opacity:0; pointer-events:none;}
+  .site .brand-intro .logo{
+    height:clamp(72px,15vw,168px); width:auto; display:block;
+    animation:logo-rise 1s cubic-bezier(0.16,1,0.3,1) 0.12s both;
   }
+  .site .brand-intro .tagline{
+    margin-top:1.6rem; color:var(--accent); font-weight:600; letter-spacing:0.12em;
+    font-size:clamp(0.82rem,1.9vw,1.15rem); text-transform:uppercase;
+    animation:fade-up 0.9s ease-out 0.5s both;
+  }
+  @keyframes logo-rise{0%{opacity:0; transform:translateY(22px) scale(0.94);} 100%{opacity:1; transform:translateY(0) scale(1);}}
+  @keyframes fade-up{0%{opacity:0; transform:translateY(8px);} 100%{opacity:1; transform:translateY(0);}}
 
   .site .status-badge{
     position:relative; z-index:1; display:inline-flex; align-items:center; gap:0.55em;
@@ -228,13 +241,6 @@ export const MARKETING_STYLES = `
   .site .ig-follow-meta .handle{font-weight:600; font-size:1.02rem; letter-spacing:-0.01em;}
   .site .ig-follow-meta .sub{color:var(--ink-muted); font-size:0.88rem; margin-top:0.25rem;}
 
-  /* Instagramの「ロゴのみ」投稿(黒背景+ロゴ+オレンジのタグライン)を参考にしたブランドステートメント帯 */
-  .site .brand-band{background:var(--black); padding-block:clamp(3.25rem,8vw,5.5rem); text-align:center;}
-  .site .brand-band img{height:clamp(24px,4.5vw,36px); width:auto; margin:0 auto; display:block;}
-  .site .brand-band p{
-    margin-top:1.1rem; color:var(--accent); font-weight:600; letter-spacing:0.1em;
-    font-size:clamp(0.8rem,1.6vw,1rem); text-transform:uppercase;
-  }
 
   /* Instagramの「1st location alert」投稿を参考にした、実写背景つきの告知バナー */
   .site .location-alert{

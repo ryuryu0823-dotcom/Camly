@@ -7,6 +7,7 @@
  */
 import RevealOnScroll from "./_components/RevealOnScroll";
 import GalleryLoop from "./_components/GalleryLoop";
+import BrandIntro from "./_components/BrandIntro";
 import SiteHeader from "./_components/SiteHeader";
 import SiteFooter from "./_components/SiteFooter";
 import { MARKETING_STYLES } from "./_components/marketingTheme";
@@ -25,6 +26,8 @@ export default function HomePage() {
       <style>{MARKETING_STYLES}</style>
       <RevealOnScroll />
 
+      <BrandIntro />
+
       <SiteHeader
         variant="dark"
         links={[{ href: "/guide", label: "使い方ガイド" }]}
@@ -33,8 +36,6 @@ export default function HomePage() {
 
       <main>
         <section className="hero wrap">
-          <img className="hero-logo" src="/camly-logo.png" alt="Camly" />
-
           <div className="status-badge" data-reveal="true">
             <span className="status-dot" />
             <span className="label">実証実験(パイロット)中 — 稼働は現在1拠点です</span>
@@ -117,11 +118,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <div className="brand-band" data-reveal="true">
-          <img src="/camly-logo.png" alt="Camly" />
-          <p>Capture your moment, anywhere.</p>
-        </div>
-
         <section className="block border-t wrap" id="how">
           <div data-reveal="true">
             <p className="eyebrow">使い方</p>
@@ -197,6 +193,7 @@ export default function HomePage() {
 
         <section className="block border-t wrap" id="location">
           <div className="location-alert" data-reveal="true">
+            <img src="/marketing/nasu-room-mini.jpg" alt="nasu room MINIのウッドデッキと森" style={{ objectPosition: "center 78%" }} />
             <div className="content">
               <span className="tag">1ST LOCATION ALERT</span>
               <h3>nasu room MINI(栃木・那須)</h3>
