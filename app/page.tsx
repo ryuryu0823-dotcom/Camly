@@ -41,7 +41,11 @@ export default function HomePage() {
             <span className="label">実証実験(パイロット)中 — 稼働は現在1拠点です</span>
           </div>
 
-          <h1 data-reveal="true">その場で借りて、その場で返す。</h1>
+          <h1 data-reveal="true">
+            撮りたい場所に、
+            <br />
+            カメラがある
+          </h1>
 
           <p className="hero-sub" data-reveal="true">
             宿泊施設やクラブに置かれたカメラを、QRコードを読むだけでレンタルできます。
