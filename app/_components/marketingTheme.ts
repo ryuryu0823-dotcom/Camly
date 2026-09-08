@@ -47,6 +47,7 @@ export const MARKETING_STYLES = `
   .site *{box-sizing:border-box;}
   .site ::selection{background:var(--accent); color:var(--selection-fg);}
   .site a{color:inherit; text-decoration:none; -webkit-tap-highlight-color:transparent;}
+  .site a:focus, .site button:focus{outline:none;}
   .site a:focus-visible, .site button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px;}
   .site p{margin:0;}
   .site h1, .site h2, .site h3{font-family:var(--font-sys); letter-spacing:-0.02em; font-weight:600;}
@@ -141,12 +142,12 @@ export const MARKETING_STYLES = `
   }
   .site .brand-intro.is-hiding{opacity:0; pointer-events:none;}
   .site .brand-intro .logo{
-    height:clamp(72px,15vw,168px); width:auto; display:block;
+    height:clamp(90px,19vw,208px); width:auto; display:block;
     animation:logo-rise 1s cubic-bezier(0.16,1,0.3,1) 0.12s both;
   }
   .site .brand-intro .tagline{
-    margin-top:1.6rem; color:var(--accent); font-weight:600; letter-spacing:0.12em;
-    font-size:clamp(0.82rem,1.9vw,1.15rem); text-transform:uppercase;
+    margin-top:1.6rem; color:var(--accent); font-weight:600; letter-spacing:0.1em;
+    font-size:clamp(0.68rem,1.4vw,0.85rem); text-transform:uppercase; line-height:1.6;
     animation:fade-up 0.9s ease-out 0.5s both;
   }
   @keyframes logo-rise{0%{opacity:0; transform:translateY(22px) scale(0.94);} 100%{opacity:1; transform:translateY(0) scale(1);}}

@@ -38,7 +38,11 @@ export default function BrandIntro() {
       onTransitionEnd={() => hiding && setMounted(false)}
     >
       <img className="logo" src="/camly-logo.png" alt="" />
-      <p className="tagline">Capture your moment, anywhere.</p>
+      <p className="tagline">
+        Capture your moment,
+        <br />
+        anywhere.
+      </p>
     </div>
   );
 }
