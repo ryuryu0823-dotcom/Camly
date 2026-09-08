@@ -80,9 +80,9 @@ export default function HomePage() {
             <a className="highlight" href="#how">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="7" width="18" height="13" rx="2.5" stroke="var(--ink-muted)" strokeWidth="1.6" />
-                  <path d="M8 7l1.6-2.5h4.8L16 7" stroke="var(--ink-muted)" strokeWidth="1.6" strokeLinejoin="round" />
-                  <circle cx="12" cy="13.5" r="3.4" stroke="var(--ink-muted)" strokeWidth="1.6" />
+                  <rect x="3" y="7" width="18" height="13" rx="2.5" stroke="var(--accent)" strokeWidth="1.6" />
+                  <path d="M8 7l1.6-2.5h4.8L16 7" stroke="var(--accent)" strokeWidth="1.6" strokeLinejoin="round" />
+                  <circle cx="12" cy="13.5" r="3.4" stroke="var(--accent)" strokeWidth="1.6" />
                 </svg>
               </span>
               <span>使い方</span>
@@ -90,8 +90,8 @@ export default function HomePage() {
             <a className="highlight" href="#trust">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="var(--ink-muted)" strokeWidth="1.6" />
-                  <path d="M12 7v10M9.5 9.3c0-1.1 1.1-1.9 2.5-1.9s2.5.8 2.5 1.8-1 1.5-2.5 1.8-2.5.8-2.5 1.8 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.9" stroke="var(--ink-muted)" strokeWidth="1.6" strokeLinecap="round" />
+                  <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.6" />
+                  <path d="M12 7v10M9.5 9.3c0-1.1 1.1-1.9 2.5-1.9s2.5.8 2.5 1.8-1 1.5-2.5 1.8-2.5.8-2.5 1.8 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.9" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
               </span>
               <span>料金</span>
@@ -99,8 +99,8 @@ export default function HomePage() {
             <a className="highlight" href="/partners#case">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z" stroke="var(--ink-muted)" strokeWidth="1.6" strokeLinejoin="round" />
-                  <circle cx="12" cy="9.5" r="2.4" stroke="var(--ink-muted)" strokeWidth="1.6" />
+                  <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z" stroke="var(--accent)" strokeWidth="1.6" strokeLinejoin="round" />
+                  <circle cx="12" cy="9.5" r="2.4" stroke="var(--accent)" strokeWidth="1.6" />
                 </svg>
               </span>
               <span>設置場所</span>
@@ -108,9 +108,9 @@ export default function HomePage() {
             <a className="highlight" href="#gallery">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="3" width="18" height="18" rx="5" stroke="var(--ink-muted)" strokeWidth="1.6" />
-                  <circle cx="12" cy="12" r="4.2" stroke="var(--ink-muted)" strokeWidth="1.6" />
-                  <circle cx="17.4" cy="6.6" r="1.1" fill="var(--ink-muted)" />
+                  <rect x="3" y="3" width="18" height="18" rx="5" stroke="var(--accent)" strokeWidth="1.6" />
+                  <circle cx="12" cy="12" r="4.2" stroke="var(--accent)" strokeWidth="1.6" />
+                  <circle cx="17.4" cy="6.6" r="1.1" fill="var(--accent)" />
                 </svg>
               </span>
               <span>Instagram</span>

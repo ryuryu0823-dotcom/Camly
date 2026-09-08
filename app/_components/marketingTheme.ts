@@ -121,11 +121,11 @@ export const MARKETING_STYLES = `
   .site .highlight{display:flex; flex-direction:column; align-items:center; gap:0.55rem; width:68px;}
   .site .highlight .ring{
     width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:var(--charcoal-2); border:1.5px solid var(--line);
-    transition:border-color 0.2s ease, transform 0.2s ease;
+    background:var(--charcoal-2); border:1.5px solid var(--accent);
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
   }
   .site .highlight .ring svg{width:24px; height:24px;}
-  .site .highlight:hover .ring{border-color:var(--accent); transform:translateY(-3px);}
+  .site .highlight:hover .ring{transform:translateY(-3px); box-shadow:0 8px 20px -10px color-mix(in srgb, var(--accent) 55%, transparent);}
   .site .highlight span{font-size:0.74rem; color:var(--ink-muted); text-align:center; line-height:1.3;}
 
   /*
@@ -246,7 +246,7 @@ export const MARKETING_STYLES = `
   .site .location-alert{
     position:relative; z-index:1; margin:0 auto;
     border-radius:1.75rem; overflow:hidden; text-align:left;
-    min-height:280px; display:flex; align-items:flex-end; max-width:640px; width:100%;
+    aspect-ratio:4/5; display:flex; align-items:flex-end; max-width:440px; width:100%;
     background:var(--charcoal-2);
   }
   .site .location-alert img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; transition:transform 0.6s ease;}
