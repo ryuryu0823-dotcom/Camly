@@ -46,7 +46,7 @@ export const MARKETING_STYLES = `
   }
   .site *{box-sizing:border-box;}
   .site ::selection{background:var(--accent); color:var(--selection-fg);}
-  .site a{color:inherit; text-decoration:none;}
+  .site a{color:inherit; text-decoration:none; -webkit-tap-highlight-color:transparent;}
   .site a:focus-visible, .site button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px;}
   .site p{margin:0;}
   .site h1, .site h2, .site h3{font-family:var(--font-sys); letter-spacing:-0.02em; font-weight:600;}
