@@ -1,6 +1,13 @@
+import SiteHeader from "../_components/SiteHeader";
+import SiteFooter from "../_components/SiteFooter";
+import { MARKETING_STYLES } from "../_components/marketingTheme";
+
 export default function TermsPage() {
   return (
-    <main className="min-h-screen px-6 py-16 max-w-2xl mx-auto">
+    <div className="site" data-theme="dark">
+      <style>{MARKETING_STYLES}</style>
+      <SiteHeader variant="dark" links={[]} cta={{ href: "/", label: "サービス概要" }} />
+      <main className="wrap" style={{ paddingBlock: "clamp(3rem,7vw,5rem)", maxWidth: "42rem" }}>
       <p className="text-camly-accent text-xs font-bold mb-2">DRAFT — 未確定</p>
       <h1 className="text-2xl font-bold mb-2">利用規約</h1>
       <p className="text-camly-inkMuted text-xs mb-8">v1-draft</p>
@@ -144,7 +151,9 @@ export default function TermsPage() {
           </p>
         </Article>
       </div>
-    </main>
+      </main>
+      <SiteFooter variant="dark" note="Make every place more possible. — 現在は実証実験(パイロット)フェーズです。" />
+    </div>
   );
 }
 
