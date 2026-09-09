@@ -84,9 +84,9 @@ export default function HomePage() {
             <a className="highlight" href="#how">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="7" width="18" height="13" rx="2.5" stroke="var(--accent)" strokeWidth="1.6" />
-                  <path d="M8 7l1.6-2.5h4.8L16 7" stroke="var(--accent)" strokeWidth="1.6" strokeLinejoin="round" />
-                  <circle cx="12" cy="13.5" r="3.4" stroke="var(--accent)" strokeWidth="1.6" />
+                  <rect x="3" y="7" width="18" height="13" rx="2.5" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
+                  <path d="M8 7l1.6-2.5h4.8L16 7" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" strokeLinejoin="round" />
+                  <circle cx="12" cy="13.5" r="3.4" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
                 </svg>
               </span>
               <span>使い方</span>
@@ -94,8 +94,8 @@ export default function HomePage() {
             <a className="highlight" href="#trust">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.6" />
-                  <path d="M12 7v10M9.5 9.3c0-1.1 1.1-1.9 2.5-1.9s2.5.8 2.5 1.8-1 1.5-2.5 1.8-2.5.8-2.5 1.8 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.9" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" />
+                  <circle cx="12" cy="12" r="9" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
+                  <path d="M12 7v10M9.5 9.3c0-1.1 1.1-1.9 2.5-1.9s2.5.8 2.5 1.8-1 1.5-2.5 1.8-2.5.8-2.5 1.8 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.9" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
               </span>
               <span>料金</span>
@@ -103,8 +103,8 @@ export default function HomePage() {
             <a className="highlight" href="/partners#case">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z" stroke="var(--accent)" strokeWidth="1.6" strokeLinejoin="round" />
-                  <circle cx="12" cy="9.5" r="2.4" stroke="var(--accent)" strokeWidth="1.6" />
+                  <path d="M12 21s-7-6.2-7-11.2A7 7 0 0 1 19 9.8C19 14.8 12 21 12 21z" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" strokeLinejoin="round" />
+                  <circle cx="12" cy="9.5" r="2.4" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
                 </svg>
               </span>
               <span>設置場所</span>
@@ -112,9 +112,9 @@ export default function HomePage() {
             <a className="highlight" href="#gallery">
               <span className="ring">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="3" width="18" height="18" rx="5" stroke="var(--accent)" strokeWidth="1.6" />
-                  <circle cx="12" cy="12" r="4.2" stroke="var(--accent)" strokeWidth="1.6" />
-                  <circle cx="17.4" cy="6.6" r="1.1" fill="var(--accent)" />
+                  <rect x="3" y="3" width="18" height="18" rx="5" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
+                  <circle cx="12" cy="12" r="4.2" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
+                  <circle cx="17.4" cy="6.6" r="1.1" style={{ fill: "var(--accent)" }} />
                 </svg>
               </span>
               <span>Instagram</span>
@@ -140,13 +140,13 @@ export default function HomePage() {
                 <p>設置場所のQRコードを読み取る</p>
                 <div className="flow-thumb">
                   <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
-                    <rect x="10" y="3" width="24" height="38" rx="5" stroke="var(--line)" strokeWidth="1.5" />
-                    <rect x="16" y="11" width="4" height="4" fill="var(--accent)" />
-                    <rect x="24" y="11" width="4" height="4" fill="var(--accent)" />
-                    <rect x="16" y="19" width="4" height="4" fill="var(--accent)" />
-                    <rect x="24" y="19" width="4" height="4" stroke="var(--accent)" strokeWidth="1.5" />
-                    <rect x="16" y="27" width="4" height="4" stroke="var(--accent)" strokeWidth="1.5" />
-                    <rect x="24" y="27" width="4" height="4" fill="var(--accent-soft)" />
+                    <rect x="10" y="3" width="24" height="38" rx="5" style={{ stroke: "var(--line)" }} strokeWidth="1.5" />
+                    <rect x="16" y="11" width="4" height="4" style={{ fill: "var(--accent)" }} />
+                    <rect x="24" y="11" width="4" height="4" style={{ fill: "var(--accent)" }} />
+                    <rect x="16" y="19" width="4" height="4" style={{ fill: "var(--accent)" }} />
+                    <rect x="24" y="19" width="4" height="4" style={{ stroke: "var(--accent)" }} strokeWidth="1.5" />
+                    <rect x="16" y="27" width="4" height="4" style={{ stroke: "var(--accent)" }} strokeWidth="1.5" />
+                    <rect x="24" y="27" width="4" height="4" style={{ fill: "var(--accent-soft)" }} />
                   </svg>
                 </div>
               </div>
@@ -155,13 +155,13 @@ export default function HomePage() {
                 <p>お名前・連絡先を入力し、カードを登録(¥50,000は一時的な保証枠。使わなければ請求されません)</p>
                 <div className="flow-thumb">
                   <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
-                    <rect x="10" y="3" width="24" height="38" rx="5" stroke="var(--line)" strokeWidth="1.5" />
-                    <rect x="15" y="15" width="14" height="9" rx="2" stroke="var(--accent)" strokeWidth="1.5" />
-                    <rect x="15" y="18" width="14" height="2" fill="var(--accent)" />
-                    <circle cx="29" cy="30" r="7" fill="var(--black)" stroke="var(--accent-soft)" strokeWidth="1.5" />
+                    <rect x="10" y="3" width="24" height="38" rx="5" style={{ stroke: "var(--line)" }} strokeWidth="1.5" />
+                    <rect x="15" y="15" width="14" height="9" rx="2" style={{ stroke: "var(--accent)" }} strokeWidth="1.5" />
+                    <rect x="15" y="18" width="14" height="2" style={{ fill: "var(--accent)" }} />
+                    <circle cx="29" cy="30" r="7" style={{ fill: "var(--black)", stroke: "var(--accent-soft)" }} strokeWidth="1.5" />
                     <path
                       d="M26 30l2 2 4-4.5"
-                      stroke="var(--accent-soft)"
+                      style={{ stroke: "var(--accent-soft)" }}
                       strokeWidth="1.5"
                       fill="none"
                       strokeLinecap="round"
@@ -239,9 +239,9 @@ export default function HomePage() {
                 }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="7" width="18" height="13" rx="2.5" stroke="var(--accent)" strokeWidth="1.6" />
-                  <path d="M8 7l1.6-2.5h4.8L16 7" stroke="var(--accent)" strokeWidth="1.6" strokeLinejoin="round" />
-                  <circle cx="12" cy="13.5" r="3.4" stroke="var(--accent)" strokeWidth="1.6" />
+                  <rect x="3" y="7" width="18" height="13" rx="2.5" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
+                  <path d="M8 7l1.6-2.5h4.8L16 7" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" strokeLinejoin="round" />
+                  <circle cx="12" cy="13.5" r="3.4" style={{ stroke: "var(--accent)" }} strokeWidth="1.6" />
                 </svg>
               </span>
             </span>
