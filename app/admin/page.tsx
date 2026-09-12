@@ -28,7 +28,12 @@ export default async function AdminDashboardPage() {
 
   return (
     <main className="min-h-screen px-6 py-12 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-1">管理画面</h1>
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-3">
+        <h1 className="text-2xl font-bold">管理画面</h1>
+        <a href="/admin/surveys" className="rounded-full border border-camly-line text-xs font-bold px-4 py-2.5">
+          返却アンケート回答一覧 →
+        </a>
+      </div>
       <p className="text-camly-inkMuted text-sm mb-8">⚠ 認証未実装。本番投入前に必ずRBACガードを追加すること。</p>
 
       <h2 className="text-lg font-bold mb-4">キーボックス暗証番号</h2>
