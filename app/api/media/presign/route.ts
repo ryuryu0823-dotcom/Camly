@@ -10,7 +10,7 @@ import { randomBytes } from "node:crypto";
 
 interface PresignBody {
   rentalToken: string;
-  kind: "RETURN_VIDEO" | "RETURN_PHOTO";
+  kind: "RETURN_VIDEO" | "RETURN_PHOTO" | "DAMAGE_EVIDENCE";
   contentType: string;
   stepKey?: string; // 返却ステップ撮影(src/lib/return-steps.ts)の場合、どのステップの動画か
 }
@@ -24,7 +24,7 @@ const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
 };
 
 function extensionFor(contentType: string, kind: PresignBody["kind"]): string {
-  return EXTENSION_BY_MIME_TYPE[contentType] ?? (kind === "RETURN_VIDEO" ? "webm" : "jpg");
+  return EXTENSION_BY_MIME_TYPE[contentType] ?? (kind === "RETURN_PHOTO" ? "jpg" : "webm");
 }
 
 export async function POST(req: NextRequest) {
