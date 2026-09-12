@@ -71,6 +71,9 @@ export default async function BoxReturnEntryPage({ params }: { params: { boxPubl
       >
         返却手続きに進む
       </a>
+      <a href={`/app/rentals/${rental.token}/defect`} className="text-xs text-camly-inkMuted underline">
+        初期不良があった場合はこちら
+      </a>
     </main>
   );
 }
