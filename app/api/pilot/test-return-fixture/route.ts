@@ -40,6 +40,32 @@ export async function GET(req: NextRequest) {
   });
 }
 
+/** 過去のテストで解放し忘れたcompartment/deviceを、アクティブなRentalが無いことを確認した上でAVAILABLEへ戻す。 */
+export async function PATCH(req: NextRequest) {
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  const body = await req.json().catch(() => ({}));
+  const compartmentId: string | undefined = body.compartmentId;
+  if (!compartmentId) return NextResponse.json({ error: "compartmentId is required" }, { status: 400 });
+
+  const activeRental = await prisma.rental.findFirst({
+    where: { checkoutCompartmentId: compartmentId, status: { in: ["RENTED", "OVERDUE"] } },
+  });
+  if (activeRental) {
+    return NextResponse.json({ error: "active rental exists, refusing to reset", rentalId: activeRental.id }, { status: 409 });
+  }
+
+  const compartment = await prisma.compartment.findUnique({ where: { id: compartmentId } });
+  if (!compartment) return NextResponse.json({ error: "compartment not found" }, { status: 404 });
+
+  await prisma.compartment.update({ where: { id: compartmentId }, data: { status: "AVAILABLE" } });
+  if (compartment.currentDeviceId) {
+    await prisma.device.update({ where: { id: compartment.currentDeviceId }, data: { status: "AVAILABLE" } });
+  }
+  return NextResponse.json({ ok: true });
+}
+
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
