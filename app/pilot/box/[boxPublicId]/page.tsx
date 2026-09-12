@@ -7,6 +7,7 @@
  * → Stripe Checkoutへのリダイレクトという既存の流れそのまま。
  */
 import { useEffect, useState } from "react";
+import InstagramBanner from "../../../_components/InstagramBanner";
 
 interface CarePlanInfo {
   id: string;
@@ -194,6 +195,8 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           <br />
           スマホひとつでその場からレンタルできます。
         </p>
+
+        <InstagramBanner />
 
         <div className="w-full rounded-xl border border-camly-line bg-camly-charcoal/60 backdrop-blur-sm divide-y divide-camly-line mb-6">
           {INTRO_STEPS.map(([num, text]) => (
