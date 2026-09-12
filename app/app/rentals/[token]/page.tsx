@@ -97,6 +97,12 @@ export default function RentalActivePage({ params }: { params: { token: string }
         Camlyについて詳しく見る
         <span aria-hidden>→</span>
       </a>
+      <a
+        href={`/app/rentals/${params.token}/defect`}
+        className="block text-center text-xs text-camly-inkMuted underline mt-6"
+      >
+        カメラに初期不良がある場合はこちら
+      </a>
     </main>
   );
 }
