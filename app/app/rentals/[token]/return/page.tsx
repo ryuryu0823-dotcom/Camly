@@ -32,12 +32,18 @@ const SATISFACTION_OPTIONS = ["1", "2", "3", "4", "5"];
 const SCENE_OPTIONS = ["記念撮影", "SNS投稿用", "観光・散策の記録", "宿泊先での思い出", "その他"];
 const PRICE_OPTIONS = ["安い", "ちょうどいい", "やや高い", "高い"];
 const REUSE_OPTIONS = ["ぜひ利用したい", "機会があれば", "わからない", "利用しないと思う"];
+// 事業拡大の意思決定(出店エリア選定・集客チャネルへの投資判断)に直結する2項目。
+// 回答負担を増やしすぎないよう、ワンタップの選択式のみを追加している。
+const DISCOVERY_OPTIONS = ["宿泊施設の案内で", "Instagramで", "友人・知人の紹介", "たまたま見かけて", "その他"];
+const VISITOR_TYPE_OPTIONS = ["観光・旅行で", "出張・仕事で", "地元・近隣に住んでいる", "その他"];
 
 interface SurveyState {
   satisfaction: string;
   scene: string;
   priceFeeling: string;
   reuseIntent: string;
+  discoveryChannel: string;
+  visitorType: string;
   wantedLocations: string;
   comments: string;
 }
@@ -47,6 +53,8 @@ const EMPTY_SURVEY: SurveyState = {
   scene: "",
   priceFeeling: "",
   reuseIntent: "",
+  discoveryChannel: "",
+  visitorType: "",
   wantedLocations: "",
   comments: "",
 };
@@ -369,6 +377,32 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
                     label={v}
                     selected={survey.reuseIntent === v}
                     onClick={() => setSurvey({ ...survey, reuseIntent: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="Camlyをどこで知りましたか?">
+              <div className="flex flex-wrap gap-2">
+                {DISCOVERY_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.discoveryChannel === v}
+                    onClick={() => setSurvey({ ...survey, discoveryChannel: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="今回はどのようなご利用ですか?">
+              <div className="flex flex-wrap gap-2">
+                {VISITOR_TYPE_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.visitorType === v}
+                    onClick={() => setSurvey({ ...survey, visitorType: v })}
                   />
                 ))}
               </div>
