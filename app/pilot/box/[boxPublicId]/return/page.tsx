@@ -13,7 +13,7 @@
  * SMART_BOX運用に拡張する場合は、利用者本人確認(名前/電話下4桁等)を挟む必要がある。
  */
 import { prisma } from "@/lib/db";
-import InstagramBanner from "../../../_components/InstagramBanner";
+import InstagramBanner from "../../../../_components/InstagramBanner";
 
 export const dynamic = "force-dynamic";
 
