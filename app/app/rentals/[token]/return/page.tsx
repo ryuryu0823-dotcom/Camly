@@ -34,6 +34,7 @@ function pickSupportedMimeType(): string | null {
 const SATISFACTION_OPTIONS = ["とても満足", "満足", "どちらともいえない", "不満", "とても不満"];
 const COMPANION_OPTIONS = ["一人", "パートナー", "友人", "家族", "その他"];
 const AGE_OPTIONS = ["18歳未満", "18〜24歳", "25〜34歳", "35〜44歳", "45〜54歳", "55歳以上", "回答しない"];
+const GENDER_OPTIONS = ["男性", "女性", "その他", "回答しない"];
 const MAIN_REASON_OPTIONS = [
   "スマートフォンよりきれいな写真を撮りたかった",
   "旅行の思い出を特別な写真で残したかった",
@@ -94,6 +95,7 @@ interface SurveyState {
   companions: string;
   companionsOther: string;
   ageGroup: string;
+  gender: string;
   mainReason: string;
   mainReasonOther: string;
   decisionSpeed: string;
@@ -113,6 +115,7 @@ const EMPTY_SURVEY: SurveyState = {
   companions: "",
   companionsOther: "",
   ageGroup: "",
+  gender: "",
   mainReason: "",
   mainReasonOther: "",
   decisionSpeed: "",
@@ -145,6 +148,7 @@ function getMissingRequiredSurveyFields(s: SurveyState): string[] {
   if (!s.satisfaction) missing.push("満足度");
   if (!s.companions) missing.push("同行者");
   if (!s.ageGroup) missing.push("年代");
+  if (!s.gender) missing.push("性別");
   if (!s.mainReason) missing.push("利用した一番の理由");
   if (!s.decisionSpeed) missing.push("利用を決めるまでの検討度合い");
   if (!s.priceFeeling) missing.push("料金について");
@@ -481,6 +485,19 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
                     label={v}
                     selected={survey.ageGroup === v}
                     onClick={() => setSurvey({ ...survey, ageGroup: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="性別を教えてください" required>
+              <div className="flex flex-wrap gap-2">
+                {GENDER_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.gender === v}
+                    onClick={() => setSurvey({ ...survey, gender: v })}
                   />
                 ))}
               </div>
