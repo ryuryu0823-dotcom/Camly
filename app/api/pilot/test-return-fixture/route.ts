@@ -18,6 +18,28 @@ function checkAuth(req: NextRequest) {
   return req.headers.get("x-test-secret") === TEST_SECRET;
 }
 
+export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  const boxPublicId = req.nextUrl.searchParams.get("boxPublicId") ?? "box_pub_3e9d7b";
+  const box = await prisma.box.findUnique({
+    where: { publicId: boxPublicId },
+    include: { compartments: true },
+  });
+  if (!box) return NextResponse.json({ error: "box not found" }, { status: 404 });
+  const activeRental = await prisma.rental.findFirst({
+    where: { checkoutCompartmentId: { in: box.compartments.map((c) => c.id) }, status: { in: ["RENTED", "OVERDUE"] } },
+  });
+  return NextResponse.json({
+    boxId: box.id,
+    locationId: box.locationId,
+    isActive: box.isActive,
+    compartments: box.compartments,
+    activeRental,
+  });
+}
+
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
