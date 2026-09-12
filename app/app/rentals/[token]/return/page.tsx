@@ -28,36 +28,127 @@ function pickSupportedMimeType(): string | null {
   return null;
 }
 
-const SATISFACTION_OPTIONS = ["1", "2", "3", "4", "5"];
-const SCENE_OPTIONS = ["記念撮影", "SNS投稿用", "観光・散策の記録", "宿泊先での思い出", "その他"];
-const PRICE_OPTIONS = ["安い", "ちょうどいい", "やや高い", "高い"];
-const REUSE_OPTIONS = ["ぜひ利用したい", "機会があれば", "わからない", "利用しないと思う"];
-// 事業拡大の意思決定(出店エリア選定・集客チャネルへの投資判断)に直結する2項目。
-// 回答負担を増やしすぎないよう、ワンタップの選択式のみを追加している。
-const DISCOVERY_OPTIONS = ["宿泊施設の案内で", "Instagramで", "友人・知人の紹介", "たまたま見かけて", "その他"];
-const VISITOR_TYPE_OPTIONS = ["観光・旅行で", "出張・仕事で", "地元・近隣に住んでいる", "その他"];
+// 返却アンケート(全12問、投資家向け需要分析・出店/商品構成の意思決定に使う設計)。
+// Q1,2,3,4,5,6,7,9は5択前後の単一選択、Q8,10は複数選択、Q11は0-10のNPS、Q12のみ自由記述任意。
+// 選択式中心にすることで、必須項目が多くても回答時間は1分半〜2分程度に収まる想定。
+const SATISFACTION_OPTIONS = ["とても満足", "満足", "どちらともいえない", "不満", "とても不満"];
+const COMPANION_OPTIONS = ["一人", "パートナー", "友人", "家族", "その他"];
+const AGE_OPTIONS = ["18歳未満", "18〜24歳", "25〜34歳", "35〜44歳", "45〜54歳", "55歳以上", "回答しない"];
+const MAIN_REASON_OPTIONS = [
+  "スマートフォンよりきれいな写真を撮りたかった",
+  "旅行の思い出を特別な写真で残したかった",
+  "カメラを持っていなかった／持ってくるのを忘れた",
+  "宿泊先にあり、気軽に試せた",
+  "購入前にカメラを試してみたかった",
+  "同行者が利用したいと言った",
+  "その他",
+];
+const DECISION_SPEED_OPTIONS = [
+  "ほとんど迷わず利用した",
+  "少し迷ったが、すぐに利用した",
+  "料金や利用方法を確認してから利用した",
+  "同行者と相談して利用した",
+  "かなり迷った",
+];
+const PRICE_OPTIONS = ["とても安い", "やや安い", "適正", "やや高い", "とても高い"];
+const REUSE_OPTIONS = ["必ず利用したい", "利用したい", "どちらともいえない", "あまり利用したくない", "利用したくない"];
+// 「利用したい場所はない」は他の選択肢と同時選択できない(排他)。
+const DESIRED_LOCATION_NONE = "利用したい場所はない";
+const DESIRED_LOCATION_OPTIONS = [
+  "ホテル・旅館",
+  "一棟貸し・民泊",
+  "観光施設・展望台",
+  "テーマパーク",
+  "着物レンタル店",
+  "クラブ・ライブ会場",
+  "結婚式場・イベント会場",
+  "空港・駅",
+  "カフェ・レストラン",
+  "その他",
+  DESIRED_LOCATION_NONE,
+];
+const VENUE_ATTRACTIVENESS_OPTIONS = [
+  "選ぶ大きな理由になる",
+  "選ぶ理由の一つになる",
+  "少し魅力を感じる",
+  "あまり影響しない",
+  "まったく影響しない",
+];
+// 「特にこだわりはない」以外を1つでも選んだ場合のみ、具体的な機種名の自由記述欄を出す
+// (先に種類を選んでもらい、分かる人だけ機種名を書ける形にする)。
+const DESIRED_CAMERA_NONE = "特にこだわりはない";
+const DESIRED_CAMERA_OPTIONS = [
+  "レトロな写りのコンパクトデジタルカメラ",
+  "高画質なコンパクトデジタルカメラ",
+  "ミラーレス一眼カメラ",
+  "アクションカメラ",
+  "チェキなどのインスタントカメラ",
+  "フィルムカメラ",
+  DESIRED_CAMERA_NONE,
+  "その他・具体的な機種がある",
+];
+const NPS_SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);
 
 interface SurveyState {
   satisfaction: string;
-  scene: string;
+  companions: string;
+  ageGroup: string;
+  mainReason: string;
+  decisionSpeed: string;
   priceFeeling: string;
   reuseIntent: string;
-  discoveryChannel: string;
-  visitorType: string;
-  wantedLocations: string;
+  desiredLocations: string[];
+  venueAttractiveness: string;
+  desiredCameraTypes: string[];
+  desiredCameraModel: string;
+  npsScore: number | null;
   comments: string;
 }
 
 const EMPTY_SURVEY: SurveyState = {
   satisfaction: "",
-  scene: "",
+  companions: "",
+  ageGroup: "",
+  mainReason: "",
+  decisionSpeed: "",
   priceFeeling: "",
   reuseIntent: "",
-  discoveryChannel: "",
-  visitorType: "",
-  wantedLocations: "",
+  desiredLocations: [],
+  venueAttractiveness: "",
+  desiredCameraTypes: [],
+  desiredCameraModel: "",
+  npsScore: null,
   comments: "",
 };
+
+/** Q8: 「利用したい場所はない」は他の選択肢と排他にする。 */
+function toggleDesiredLocation(current: string[], value: string): string[] {
+  if (value === DESIRED_LOCATION_NONE) {
+    return current.includes(DESIRED_LOCATION_NONE) ? [] : [DESIRED_LOCATION_NONE];
+  }
+  const withoutNone = current.filter((v) => v !== DESIRED_LOCATION_NONE);
+  return withoutNone.includes(value) ? withoutNone.filter((v) => v !== value) : [...withoutNone, value];
+}
+
+function toggleInArray(current: string[], value: string): string[] {
+  return current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+}
+
+function getMissingRequiredSurveyFields(s: SurveyState): string[] {
+  const missing: string[] = [];
+  if (!s.satisfaction) missing.push("満足度");
+  if (!s.companions) missing.push("同行者");
+  if (!s.ageGroup) missing.push("年代");
+  if (!s.mainReason) missing.push("利用した一番の理由");
+  if (!s.decisionSpeed) missing.push("利用を決めるまでの検討度合い");
+  if (!s.priceFeeling) missing.push("料金について");
+  if (!s.reuseIntent) missing.push("また利用したいか");
+  if (s.desiredLocations.length === 0) missing.push("Camlyがあったら利用したい場所");
+  if (!s.venueAttractiveness) missing.push("施設選びへの影響度");
+  if (s.desiredCameraTypes.length === 0) missing.push("借りてみたいカメラの種類");
+  if (s.npsScore === null) missing.push("友人・家族への推奨度");
+  return missing;
+}
 
 export default function ReturnPage({ params }: { params: { token: string } }) {
   const [stepIndex, setStepIndex] = useState(0);
@@ -247,6 +338,11 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
   }
 
   async function handleSubmit() {
+    const missing = getMissingRequiredSurveyFields(survey);
+    if (missing.length > 0) {
+      setSubmitError(`アンケートの必須項目が未回答です: ${missing.join("、")}`);
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -256,7 +352,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         if (!uploaded) throw new Error(`${s.label}が未撮影です`);
         return { stepKey: s.key, storageKey: uploaded.storageKey, mimeType: uploaded.mimeType };
       });
-      const surveyAnswers = Object.values(survey).some((v) => v) ? survey : undefined;
+      const surveyAnswers = survey;
       const res = await fetch(`/api/rentals/${params.token}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -331,11 +427,13 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
 
         <section className="mb-8">
           <h2 className="text-lg font-bold mb-1">あなたの声がCamlyを作ります</h2>
-          <p className="text-camly-inkMuted text-xs mb-5">実証実験中につき、ご協力いただけると嬉しいです(すべて任意)。</p>
+          <p className="text-camly-inkMuted text-xs mb-5">
+            今後の出店・商品づくりの参考にします。★は必須、残り1問(最後)のみ任意です。
+          </p>
 
           <div className="space-y-5">
-            <SurveyField label="今回のご利用、満足度は?">
-              <div className="flex gap-2">
+            <SurveyField label="Camlyの利用体験全体に、どのくらい満足しましたか?" required>
+              <div className="flex flex-wrap gap-2">
                 {SATISFACTION_OPTIONS.map((v) => (
                   <PillButton
                     key={v}
@@ -344,19 +442,62 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
                     onClick={() => setSurvey({ ...survey, satisfaction: v })}
                   />
                 ))}
-                <span className="text-xs text-camly-inkMuted self-center ml-1">(5が最高)</span>
               </div>
             </SurveyField>
 
-            <SurveyField label="今回の利用シーンに近いものは?">
+            <SurveyField label="今回はどなたと宿泊しましたか?" required>
               <div className="flex flex-wrap gap-2">
-                {SCENE_OPTIONS.map((v) => (
-                  <PillButton key={v} label={v} selected={survey.scene === v} onClick={() => setSurvey({ ...survey, scene: v })} />
+                {COMPANION_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.companions === v}
+                    onClick={() => setSurvey({ ...survey, companions: v })}
+                  />
                 ))}
               </div>
             </SurveyField>
 
-            <SurveyField label="料金(3時間¥990〜)は妥当だと感じましたか?">
+            <SurveyField label="年代を教えてください" required>
+              <div className="flex flex-wrap gap-2">
+                {AGE_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.ageGroup === v}
+                    onClick={() => setSurvey({ ...survey, ageGroup: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="今回、Camlyを利用した一番の理由を教えてください" required>
+              <div className="flex flex-wrap gap-2">
+                {MAIN_REASON_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.mainReason === v}
+                    onClick={() => setSurvey({ ...survey, mainReason: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="Camlyを見つけてから、利用を決めるまでどのくらい迷いましたか?" required>
+              <div className="flex flex-wrap gap-2">
+                {DECISION_SPEED_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.decisionSpeed === v}
+                    onClick={() => setSurvey({ ...survey, decisionSpeed: v })}
+                  />
+                ))}
+              </div>
+            </SurveyField>
+
+            <SurveyField label="今回の料金について、どのように感じましたか?" required>
               <div className="flex flex-wrap gap-2">
                 {PRICE_OPTIONS.map((v) => (
                   <PillButton
@@ -369,7 +510,7 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
               </div>
             </SurveyField>
 
-            <SurveyField label="また機会があればCamlyを利用したいですか?">
+            <SurveyField label="同じように宿泊先や観光施設にCamlyがあれば、また利用したいですか?" required>
               <div className="flex flex-wrap gap-2">
                 {REUSE_OPTIONS.map((v) => (
                   <PillButton
@@ -382,47 +523,81 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
               </div>
             </SurveyField>
 
-            <SurveyField label="Camlyをどこで知りましたか?">
+            <SurveyField label="今後、どこにCamlyがあったら利用したいですか?(複数選択可)" required>
               <div className="flex flex-wrap gap-2">
-                {DISCOVERY_OPTIONS.map((v) => (
+                {DESIRED_LOCATION_OPTIONS.map((v) => (
                   <PillButton
                     key={v}
                     label={v}
-                    selected={survey.discoveryChannel === v}
-                    onClick={() => setSurvey({ ...survey, discoveryChannel: v })}
+                    selected={survey.desiredLocations.includes(v)}
+                    onClick={() => setSurvey({ ...survey, desiredLocations: toggleDesiredLocation(survey.desiredLocations, v) })}
                   />
                 ))}
               </div>
             </SurveyField>
 
-            <SurveyField label="今回はどのようなご利用ですか?">
+            <SurveyField label="Camlyが設置されていることは、宿泊先や施設を選ぶ際の魅力になりますか?" required>
               <div className="flex flex-wrap gap-2">
-                {VISITOR_TYPE_OPTIONS.map((v) => (
+                {VENUE_ATTRACTIVENESS_OPTIONS.map((v) => (
                   <PillButton
                     key={v}
                     label={v}
-                    selected={survey.visitorType === v}
-                    onClick={() => setSurvey({ ...survey, visitorType: v })}
+                    selected={survey.venueAttractiveness === v}
+                    onClick={() => setSurvey({ ...survey, venueAttractiveness: v })}
                   />
                 ))}
               </div>
             </SurveyField>
 
-            <SurveyField label="こんな場所にもあったら使いたい、というご希望があれば">
-              <textarea
-                value={survey.wantedLocations}
-                onChange={(e) => setSurvey({ ...survey, wantedLocations: e.target.value })}
-                rows={2}
-                placeholder="例: 空港、温泉旅館、キャンプ場 など"
-                className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent resize-none"
-              />
+            <SurveyField label="今後、Camlyで借りてみたいカメラはありますか?(複数選択可)" required>
+              <div className="flex flex-wrap gap-2">
+                {DESIRED_CAMERA_OPTIONS.map((v) => (
+                  <PillButton
+                    key={v}
+                    label={v}
+                    selected={survey.desiredCameraTypes.includes(v)}
+                    onClick={() => setSurvey({ ...survey, desiredCameraTypes: toggleInArray(survey.desiredCameraTypes, v) })}
+                  />
+                ))}
+              </div>
+              {survey.desiredCameraTypes.some((v) => v !== DESIRED_CAMERA_NONE) && (
+                <input
+                  type="text"
+                  value={survey.desiredCameraModel}
+                  onChange={(e) => setSurvey({ ...survey, desiredCameraModel: e.target.value })}
+                  placeholder="任意: 具体的な機種名があれば(例: RICOH GR、Kodak FZ55、FUJIFILM X100シリーズ など)"
+                  className="w-full mt-2 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent"
+                />
+              )}
             </SurveyField>
 
-            <SurveyField label="ご感想・気になった点・改善してほしい点など">
+            <SurveyField label="Camlyを友人や家族に勧めたいと思いますか?" required>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {NPS_SCORE_OPTIONS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setSurvey({ ...survey, npsScore: n })}
+                    className={`w-9 h-9 shrink-0 rounded-full border text-xs font-bold transition-colors ${
+                      survey.npsScore === n ? "bg-camly-accent border-camly-accent text-camly-black" : "border-camly-line text-camly-ink"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between text-[10px] text-camly-inkMuted">
+                <span>0=まったく勧めたくない</span>
+                <span>10=ぜひ勧めたい</span>
+              </div>
+            </SurveyField>
+
+            <SurveyField label="Camlyについて、良かった点や改善してほしい点があれば教えてください(任意)">
               <textarea
                 value={survey.comments}
                 onChange={(e) => setSurvey({ ...survey, comments: e.target.value })}
                 rows={3}
+                placeholder="例: 利用方法、写真の仕上がり、料金、カメラの種類、返却方法など"
                 className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent resize-none"
               />
             </SurveyField>
@@ -515,10 +690,21 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
   );
 }
 
-function SurveyField({ label, children }: { label: string; children: React.ReactNode }) {
+function SurveyField({
+  label,
+  required = false,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <p className="text-xs text-camly-inkMuted mb-2">{label}</p>
+      <p className="text-xs text-camly-inkMuted mb-2">
+        {label}
+        {required && <span className="text-camly-accent font-bold"> ★</span>}
+      </p>
       {children}
     </div>
   );
