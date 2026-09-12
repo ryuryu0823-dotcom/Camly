@@ -92,12 +92,15 @@ const NPS_SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);
 interface SurveyState {
   satisfaction: string;
   companions: string;
+  companionsOther: string;
   ageGroup: string;
   mainReason: string;
+  mainReasonOther: string;
   decisionSpeed: string;
   priceFeeling: string;
   reuseIntent: string;
   desiredLocations: string[];
+  desiredLocationsOther: string;
   venueAttractiveness: string;
   desiredCameraTypes: string[];
   desiredCameraModel: string;
@@ -108,12 +111,15 @@ interface SurveyState {
 const EMPTY_SURVEY: SurveyState = {
   satisfaction: "",
   companions: "",
+  companionsOther: "",
   ageGroup: "",
   mainReason: "",
+  mainReasonOther: "",
   decisionSpeed: "",
   priceFeeling: "",
   reuseIntent: "",
   desiredLocations: [],
+  desiredLocationsOther: "",
   venueAttractiveness: "",
   desiredCameraTypes: [],
   desiredCameraModel: "",
@@ -427,8 +433,8 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
 
         <section className="mb-8">
           <h2 className="text-lg font-bold mb-1">あなたの声がCamlyを作ります</h2>
-          <p className="text-camly-inkMuted text-xs mb-5">
-            今後の出店・商品づくりの参考にします。★は必須、残り1問(最後)のみ任意です。
+          <p className="text-camly-inkMuted text-xs leading-relaxed mb-5">
+            Camlyをご利用いただき、ありがとうございました。いただいたお声は、これからの設置場所やカメラのラインナップを決める大切な参考にさせていただきます。お手数をおかけしますが、ご協力のほどよろしくお願いいたします(★は必須、最後の1問のみ任意です)。
           </p>
 
           <div className="space-y-5">
@@ -456,6 +462,15 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
                   />
                 ))}
               </div>
+              {survey.companions === "その他" && (
+                <input
+                  type="text"
+                  value={survey.companionsOther}
+                  onChange={(e) => setSurvey({ ...survey, companionsOther: e.target.value })}
+                  placeholder="具体的に教えてください"
+                  className="w-full mt-2 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent"
+                />
+              )}
             </SurveyField>
 
             <SurveyField label="年代を教えてください" required>
@@ -482,6 +497,15 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
                   />
                 ))}
               </div>
+              {survey.mainReason === "その他" && (
+                <input
+                  type="text"
+                  value={survey.mainReasonOther}
+                  onChange={(e) => setSurvey({ ...survey, mainReasonOther: e.target.value })}
+                  placeholder="具体的に教えてください"
+                  className="w-full mt-2 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent"
+                />
+              )}
             </SurveyField>
 
             <SurveyField label="Camlyを見つけてから、利用を決めるまでどのくらい迷いましたか?" required>
@@ -534,6 +558,15 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
                   />
                 ))}
               </div>
+              {survey.desiredLocations.includes("その他") && (
+                <input
+                  type="text"
+                  value={survey.desiredLocationsOther}
+                  onChange={(e) => setSurvey({ ...survey, desiredLocationsOther: e.target.value })}
+                  placeholder="具体的に教えてください"
+                  className="w-full mt-2 rounded-lg bg-camly-charcoal border border-camly-line px-4 py-3 text-sm outline-none focus:border-camly-accent"
+                />
+              )}
             </SurveyField>
 
             <SurveyField label="Camlyが設置されていることは、宿泊先や施設を選ぶ際の魅力になりますか?" required>
