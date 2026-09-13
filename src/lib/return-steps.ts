@@ -20,19 +20,19 @@ export const RETURN_STEPS: ReturnStep[] = [
   {
     key: "front",
     label: "本体正面",
-    instruction: "カメラをBoxから取り出し、手に持った状態で正面全体が分かるように撮影してください(傷や破損がないかの確認用です)",
+    instruction: "カメラをBoxから取り出し、手に持った状態で正面全体が分かるように撮影してください(状態確認用です)",
     kind: "photo",
   },
   {
     key: "back",
     label: "本体背面",
-    instruction: "カメラを手に持った状態で背面全体が分かるように撮影してください(傷や破損がないかの確認用です)",
+    instruction: "カメラを手に持った状態で背面全体が分かるように撮影してください(状態確認用です)",
     kind: "photo",
   },
   {
     key: "accessories",
     label: "付属品一式",
-    instruction: "ストラップ・SDカード・SDカードリーダー・ケース・AC充電器・持ち運び用ケーブルを並べて撮影してください",
+    instruction: "ストラップ・SDカード・SDカードリーダー・ケースを並べて撮影してください",
     kind: "photo",
   },
   {
