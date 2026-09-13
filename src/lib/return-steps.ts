@@ -17,8 +17,18 @@ export interface ReturnStep {
 }
 
 export const RETURN_STEPS: ReturnStep[] = [
-  { key: "front", label: "本体正面", instruction: "カメラの正面が分かるように撮影してください", kind: "photo" },
-  { key: "back", label: "本体背面", instruction: "カメラの背面が分かるように撮影してください", kind: "photo" },
+  {
+    key: "front",
+    label: "本体正面",
+    instruction: "カメラをBoxから取り出し、手に持った状態で正面全体が分かるように撮影してください(傷や破損がないかの確認用です)",
+    kind: "photo",
+  },
+  {
+    key: "back",
+    label: "本体背面",
+    instruction: "カメラを手に持った状態で背面全体が分かるように撮影してください(傷や破損がないかの確認用です)",
+    kind: "photo",
+  },
   {
     key: "accessories",
     label: "付属品一式",
