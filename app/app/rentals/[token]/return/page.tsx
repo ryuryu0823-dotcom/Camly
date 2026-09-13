@@ -423,8 +423,8 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
         <div className="rounded-xl border border-camly-line p-4 mb-6 text-xs text-camly-inkMuted leading-relaxed">
           <p className="font-bold text-camly-ink mb-1">送信前にご確認ください</p>
           <p>
-            SDカードのデータはお済みですか?カードリーダー等で転送する際に「削除しますか?」と表示されたら、
-            次にお使いになる方のために削除にご協力ください。
+            SDカードのデータの移行・消去はお済みですか?カードリーダー等でパソコンやスマートフォンにデータを移したうえで、
+            次にお使いになる方のために、SDカード内のデータを消去してください。
           </p>
           <p className="mt-2">
             返却時点でSDカードにデータが残っていた場合の取扱い(閲覧・削除・消失を含む)について、当社は責任を負いかねます。大切なデータは必ず事前にご自身でバックアップしてください(
