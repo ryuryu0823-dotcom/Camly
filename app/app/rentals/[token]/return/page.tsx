@@ -382,8 +382,9 @@ export default function ReturnPage({ params }: { params: { token: string } }) {
     return (
       <main className="min-h-screen flex items-center justify-center px-6 text-center">
         <div>
-          <p className="text-camly-accent text-xs tracking-widest font-bold mb-3">受付完了</p>
-          <p className="text-lg font-bold">{result}</p>
+          <p className="text-camly-accent text-xs tracking-widest font-bold mb-3">返却完了</p>
+          <p className="text-lg font-bold mb-4">良い時間になったことを願っています。</p>
+          <p className="text-xs text-camly-inkMuted">※ご利用明細はご登録のメールアドレスにお送りいたします。</p>
         </div>
       </main>
     );
