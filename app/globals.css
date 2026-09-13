@@ -2,11 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-}
-
+/*
+ * ページ全体の既定値としてdarkを指定しているが、/partnersのような白基調ページは
+ * .site[data-theme="light"](marketingTheme.ts)側でcolor-schemeをlightに上書きする。
+ * これが無いと、白ページなのにブラウザには「dark対応ページ」というシグナルが伝わり続け、
+ * モバイルブラウザの自動ダークモード補正が誤って白背景を黒反転させることがある。
+ */
 body {
+  color-scheme: dark;
   background-color: #141210;
   color: #f5f1ea;
 }
