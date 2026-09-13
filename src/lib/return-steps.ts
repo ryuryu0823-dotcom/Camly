@@ -32,7 +32,7 @@ export const RETURN_STEPS: ReturnStep[] = [
   {
     key: "accessories",
     label: "付属品一式",
-    instruction: "ストラップ・SDカード・SDカードリーダー・ケースを並べて撮影してください",
+    instruction: "ストラップ・SDカード・SDカードリーダー・ケース・充電器(正面にSONYと書いてあるもの)を並べて撮影してください",
     kind: "photo",
   },
   {
