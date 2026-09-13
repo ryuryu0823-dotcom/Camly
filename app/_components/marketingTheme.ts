@@ -13,6 +13,7 @@
  */
 export const MARKETING_STYLES = `
   .site[data-theme="dark"]{
+    color-scheme:dark;
     --black:#141210;
     --bg:#141210;
     --charcoal:#1c1a17;
@@ -26,6 +27,7 @@ export const MARKETING_STYLES = `
     --selection-fg:var(--black);
   }
   .site[data-theme="light"]{
+    color-scheme:light;
     --black:#141210;
     --bg:#fbfaf6;
     --charcoal:#f4f1ea;
