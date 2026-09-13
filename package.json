@@ -1,0 +1,38 @@
+{
+  "name": "camly",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Camly - place-based unattended camera rental. PWA + admin, single codebase (Master Handoff v2).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "vercel-build": "prisma generate && node scripts/migrate.cjs && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
+    "db:migrate": "node scripts/migrate.cjs",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "@prisma/client": "^5.19.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "prisma": "^5.19.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0",
+    "tsx": "^4.16.0"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}
