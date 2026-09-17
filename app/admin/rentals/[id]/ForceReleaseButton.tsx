@@ -6,29 +6,34 @@
  * status=HELDならStripeへの操作なし、それ以外(RENTED等)なら¥50,000与信枠を
  * PaymentIntentごとcancelして解放する。返却フロー(動画確認)を経ない例外対応。
  *
- * ⚠ 管理者認証未実装(ApproveButtonと同じTODO)。adminUserIdは簡易な入力欄で受け取る。
+ * ⚠ 管理者認証未実装(ApproveButtonと同じTODO)。まだ個人アカウントが無いため、
+ * adminUserIdは入力させず固定値("admin-web")を送る(APIの監査ログ用必須項目を満たすためだけの仮値)。
+ * その代わり、実際にお金が動く操作なので押した直後に確認ダイアログを挟む。
  */
 import { useState } from "react";
 
+const ADMIN_ACTOR_ID = "admin-web";
+
 export function ForceReleaseButton({ rentalId, status }: { rentalId: string; status: string }) {
-  const [adminUserId, setAdminUserId] = useState("");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   async function handleRelease() {
-    if (!adminUserId) {
-      setError("管理者ID(AdminUser.id)を入力してください。");
-      return;
-    }
+    const warning =
+      status !== "HELD"
+        ? "既に確定済みの¥50,000与信枠も全額解放されます。よろしいですか?この操作は取り消せません。"
+        : "返却フローを経ずに強制キャンセルします。よろしいですか?この操作は取り消せません。";
+    if (!window.confirm(warning)) return;
+
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch(`/api/admin/rentals/${rentalId}/force-release`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminUserId, reason: reason || undefined }),
+        body: JSON.stringify({ adminUserId: ADMIN_ACTOR_ID, reason: reason || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "解放に失敗しました");
@@ -54,14 +59,6 @@ export function ForceReleaseButton({ rentalId, status }: { rentalId: string; sta
         返却フローを経ずに強制キャンセルします。
         {status !== "HELD" && "既に確定済みの¥50,000与信枠も全額解放されます。"}
       </p>
-      <label className="block">
-        <span className="block text-xs text-camly-inkMuted mb-1.5">管理者ID(AdminUser.id)</span>
-        <input
-          value={adminUserId}
-          onChange={(e) => setAdminUserId(e.target.value)}
-          className="w-full rounded-lg bg-camly-charcoal border border-camly-line px-4 py-2.5 text-base"
-        />
-      </label>
       <label className="block">
         <span className="block text-xs text-camly-inkMuted mb-1.5">メモ(任意)</span>
         <input
